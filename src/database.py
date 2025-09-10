@@ -12,16 +12,16 @@ Base = declarative_base()
 
 
 # DB_PASSWORD = urllib.parse.quote_plus(os.getenv("DB_PASSWORD", "7x?FRp@+nZ"))
-DB_PASSWORD = urllib.parse.quote_plus(os.getenv("DB_PASSWORD", ""))
+# DB_PASSWORD = urllib.parse.quote_plus(os.getenv("DB_PASSWORD", "5fKxd2*Ce6&"))
 
 
 load_dotenv()
 # Database configuration
-DB_USER = os.getenv("DB_USER", "root")
-DB_PASSWORD = urllib.parse.quote_plus(os.getenv("DB_PASSWORD", ""))
-DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_USER = os.getenv("DB_USER", "u735495348_calendar")
+DB_PASSWORD = urllib.parse.quote_plus(os.getenv("DB_PASSWORD", "1vF=e2*kei"))
+DB_HOST = os.getenv("DB_HOST", "srv1751.hstgr.io")
 DB_PORT = os.getenv("DB_PORT", "3306")
-DB_NAME = os.getenv("DB_NAME", "CalenderApp")
+DB_NAME = os.getenv("DB_NAME", "u735495348_calendar")
 
 print("DB_USER :: ", DB_USER)
 print("DB_PASSWORD :: ", DB_PASSWORD)
