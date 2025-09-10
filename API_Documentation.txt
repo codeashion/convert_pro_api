@@ -1,0 +1,1032 @@
+CALENDAR API - COMPLETE API DOCUMENTATION WITH CURL COMMANDS
+================================================================
+
+Base URL: http://localhost:8000/api
+Server Status URL: http://localhost:8000
+
+AUTHENTICATION HEADER:
+All protected endpoints require: --header "token: YOUR_JWT_TOKEN_HERE"
+
+================================================================
+1. SERVER STATUS
+================================================================
+
+Title: Check Server Status
+Description: Verify if the server is operational
+Method: GET
+URL: /
+
+CURL Command:
+curl -X GET "http://localhost:8000/"
+
+Expected Response:
+{
+  "message": "Welcome to the API. The server is operational."
+}
+
+================================================================
+2. AUTHENTICATION ENDPOINTS
+================================================================
+
+Title: User Registration (Signup)
+Description: Register a new parent user with family members
+Method: POST
+URL: /api/auth/signup
+
+CURL Command:
+curl -X POST "http://localhost:8000/api/auth/signup" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "full_name": "John Doe",
+    "email": "john.doe@example.com",
+    "password": "securepassword123",
+    "confirm_password": "securepassword123",
+    "family_members": [
+      {
+        "member_name": "Alice Doe",
+        "date_of_birth": "2015-03-15",
+        "assigned_colour": "#FF5733",
+        "image_path": null,
+        "voice_recording": null
+      }
+    ]
+  }'
+
+Expected Response:
+{
+  "statusCode": 201,
+  "status": true,
+  "message": "User created successfully",
+  "data": {
+    "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "token_type": "bearer",
+    "parent": {
+      "id": 1,
+      "full_name": "John Doe",
+      "email": "john.doe@example.com",
+      "family_members": [...]
+    }
+  }
+}
+
+----------------------------------------------------------------
+
+Title: User Login
+Description: Login for parents and admins
+Method: POST
+URL: /api/auth/login
+
+CURL Command:
+curl -X POST "http://localhost:8000/api/auth/login" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "email": "john.doe@example.com",
+    "password": "securepassword123"
+  }'
+
+Expected Response:
+{
+  "statusCode": 200,
+  "status": true,
+  "message": "Login successful",
+  "data": {
+    "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "token_type": "bearer",
+    "parent": {
+      "id": 1,
+      "full_name": "John Doe",
+      "email": "john.doe@example.com"
+    }
+  }
+}
+
+----------------------------------------------------------------
+
+Title: Firebase Social Login
+Description: Login with Firebase ID token (Google, Apple, Facebook)
+Method: POST
+URL: /api/auth/firebase-login
+
+CURL Command:
+curl -X POST "http://localhost:8000/api/auth/firebase-login" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "id_token": "firebase_id_token_here"
+  }'
+
+Expected Response:
+{
+  "statusCode": 200,
+  "status": true,
+  "message": "Firebase login successful",
+  "data": {
+    "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "token_type": "bearer",
+    "parent": {
+      "id": 1,
+      "full_name": "John Doe",
+      "email": "john.doe@example.com",
+      "provider": "google"
+    }
+  }
+}
+
+----------------------------------------------------------------
+
+Title: Get User Profile
+Description: Get current user's profile information
+Method: GET
+URL: /api/auth/profile
+
+CURL Command:
+curl -X GET "http://localhost:8000/api/auth/profile" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+Expected Response:
+{
+  "id": 1,
+  "full_name": "John Doe",
+  "email": "john.doe@example.com",
+  "family_members": [
+    {
+      "id": 1,
+      "member_name": "Alice Doe",
+      "date_of_birth": "2015-03-15",
+      "assigned_colour": "#FF5733",
+      "image_path": null,
+      "voice_recording": null
+    }
+  ]
+}
+
+----------------------------------------------------------------
+
+Title: Update User Profile
+Description: Update current user's profile
+Method: PUT
+URL: /api/auth/profile
+
+CURL Command:
+curl -X PUT "http://localhost:8000/api/auth/profile" \
+  --header "Content-Type: application/json" \
+  --header "token: YOUR_JWT_TOKEN_HERE" \
+  --data '{
+    "full_name": "John Smith",
+    "email": "john.smith@example.com",
+    "password": "newpassword123",
+    "confirm_password": "newpassword123",
+    "family_members": [
+      {
+        "member_name": "Alice Smith",
+        "date_of_birth": "2015-03-15",
+        "assigned_colour": "#FF5733"
+      }
+    ]
+  }'
+
+Expected Response:
+{
+  "id": 1,
+  "full_name": "John Smith",
+  "email": "john.smith@example.com",
+  "family_members": [...]
+}
+
+----------------------------------------------------------------
+
+Title: Delete User Profile
+Description: Delete current user's profile
+Method: DELETE
+URL: /api/auth/profile
+
+CURL Command:
+curl -X DELETE "http://localhost:8000/api/auth/profile" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+Expected Response:
+{
+  "statusCode": 200,
+  "status": true,
+  "message": "User profile deleted successfully"
+}
+
+----------------------------------------------------------------
+
+Title: Get All Parents (Admin Only)
+Description: Get all parent users - admin access required
+Method: GET
+URL: /api/auth/parents
+
+CURL Command:
+curl -X GET "http://localhost:8000/api/auth/parents" \
+  --header "token: ADMIN_JWT_TOKEN_HERE"
+
+Expected Response:
+[
+  {
+    "id": 1,
+    "full_name": "John Doe",
+    "email": "john.doe@example.com",
+    "family_members": [...]
+  }
+]
+
+================================================================
+3. FAMILY MEMBERS ENDPOINTS
+================================================================
+
+Title: Get All Family Members
+Description: Get all family members for the authenticated user
+Method: GET
+URL: /api/family-members/
+
+CURL Command:
+curl -X GET "http://localhost:8000/api/family-members/" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+Expected Response:
+[
+  {
+    "id": 1,
+    "member_name": "Alice Doe",
+    "date_of_birth": "2015-03-15",
+    "assigned_colour": "#FF5733",
+    "image_path": null,
+    "voice_recording": null
+  }
+]
+
+----------------------------------------------------------------
+
+Title: Get Family Member by ID
+Description: Get a specific family member by ID
+Method: GET
+URL: /api/family-members/{family_member_id}
+
+CURL Command:
+curl -X GET "http://localhost:8000/api/family-members/1" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+Expected Response:
+{
+  "id": 1,
+  "member_name": "Alice Doe",
+  "date_of_birth": "2015-03-15",
+  "assigned_colour": "#FF5733",
+  "image_path": null,
+  "voice_recording": null
+}
+
+----------------------------------------------------------------
+
+Title: Add Family Member
+Description: Add a new family member
+Method: POST
+URL: /api/family-members/add
+
+CURL Command:
+curl -X POST "http://localhost:8000/api/family-members/add" \
+  --header "Content-Type: application/json" \
+  --header "token: YOUR_JWT_TOKEN_HERE" \
+  --data '{
+    "member_name": "Bob Doe",
+    "date_of_birth": "2018-07-20",
+    "assigned_colour": "#33FF57",
+    "image_path": null,
+    "voice_recording": null
+  }'
+
+Expected Response:
+{
+  "id": 2,
+  "member_name": "Bob Doe",
+  "date_of_birth": "2018-07-20",
+  "assigned_colour": "#33FF57",
+  "image_path": null,
+  "voice_recording": null
+}
+
+----------------------------------------------------------------
+
+Title: Update Family Member
+Description: Update an existing family member
+Method: PUT
+URL: /api/family-members/{family_member_id}
+
+CURL Command:
+curl -X PUT "http://localhost:8000/api/family-members/1" \
+  --header "Content-Type: application/json" \
+  --header "token: YOUR_JWT_TOKEN_HERE" \
+  --data '{
+    "member_name": "Alice Updated",
+    "date_of_birth": "2015-03-15",
+    "assigned_colour": "#FF3357",
+    "image_path": "/uploads/alice_photo.jpg",
+    "voice_recording": "/uploads/alice_voice.mp3"
+  }'
+
+Expected Response:
+{
+  "id": 1,
+  "member_name": "Alice Updated",
+  "date_of_birth": "2015-03-15",
+  "assigned_colour": "#FF3357",
+  "image_path": "/uploads/alice_photo.jpg",
+  "voice_recording": "/uploads/alice_voice.mp3"
+}
+
+----------------------------------------------------------------
+
+Title: Delete Family Member
+Description: Delete a family member
+Method: DELETE
+URL: /api/family-members/{family_member_id}
+
+CURL Command:
+curl -X DELETE "http://localhost:8000/api/family-members/1" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+Expected Response:
+{
+  "statusCode": 200,
+  "status": true,
+  "message": "Family member deleted successfully"
+}
+
+================================================================
+4. TASKS ENDPOINTS
+================================================================
+
+Title: Get All Tasks
+Description: Get all tasks with optional filtering and search
+Method: GET
+URL: /api/tasks/
+
+CURL Command (Basic):
+curl -X GET "http://localhost:8000/api/tasks/" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+CURL Command (With Filters):
+curl -X GET "http://localhost:8000/api/tasks/?limit=10&offset=0&search=homework&completed=false&family_member_id=1&date_from=2024-01-01&date_to=2024-12-31" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+Expected Response:
+[
+  {
+    "id": 1,
+    "title": "Complete Homework",
+    "message": "Math and Science homework",
+    "task_icon_id": 1,
+    "family_member_id": 1,
+    "parent_id": 1,
+    "date": "2024-03-15",
+    "time": "15:00:00",
+    "completed": false,
+    "audio_file": null,
+    "created_at": "2024-03-01T10:00:00",
+    "updated_at": "2024-03-01T10:00:00"
+  }
+]
+
+----------------------------------------------------------------
+
+Title: Get Task by ID
+Description: Get a specific task by ID
+Method: GET
+URL: /api/tasks/{task_id}
+
+CURL Command:
+curl -X GET "http://localhost:8000/api/tasks/1" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+Expected Response:
+{
+  "id": 1,
+  "title": "Complete Homework",
+  "message": "Math and Science homework",
+  "task_icon_id": 1,
+  "family_member_id": 1,
+  "parent_id": 1,
+  "date": "2024-03-15",
+  "time": "15:00:00",
+  "completed": false,
+  "audio_file": null,
+  "created_at": "2024-03-01T10:00:00",
+  "updated_at": "2024-03-01T10:00:00"
+}
+
+----------------------------------------------------------------
+
+Title: Create Task
+Description: Create a new task
+Method: POST
+URL: /api/tasks/add
+
+CURL Command:
+curl -X POST "http://localhost:8000/api/tasks/add" \
+  --header "Content-Type: application/json" \
+  --header "token: YOUR_JWT_TOKEN_HERE" \
+  --data '{
+    "title": "Clean Room",
+    "message": "Clean and organize bedroom",
+    "task_icon_id": 2,
+    "family_member_id": 1,
+    "date": "2024-03-16",
+    "time": "10:00:00",
+    "audio_file": null
+  }'
+
+Expected Response:
+{
+  "id": 2,
+  "title": "Clean Room",
+  "message": "Clean and organize bedroom",
+  "task_icon_id": 2,
+  "family_member_id": 1,
+  "parent_id": 1,
+  "date": "2024-03-16",
+  "time": "10:00:00",
+  "completed": false,
+  "audio_file": null,
+  "created_at": "2024-03-01T11:00:00",
+  "updated_at": "2024-03-01T11:00:00"
+}
+
+----------------------------------------------------------------
+
+Title: Update Task
+Description: Update an existing task
+Method: PUT
+URL: /api/tasks/{task_id}
+
+CURL Command:
+curl -X PUT "http://localhost:8000/api/tasks/1" \
+  --header "Content-Type: application/json" \
+  --header "token: YOUR_JWT_TOKEN_HERE" \
+  --data '{
+    "title": "Complete Homework - Updated",
+    "message": "Math, Science, and English homework",
+    "completed": true
+  }'
+
+Expected Response:
+{
+  "id": 1,
+  "title": "Complete Homework - Updated",
+  "message": "Math, Science, and English homework",
+  "task_icon_id": 1,
+  "family_member_id": 1,
+  "parent_id": 1,
+  "date": "2024-03-15",
+  "time": "15:00:00",
+  "completed": true,
+  "audio_file": null,
+  "created_at": "2024-03-01T10:00:00",
+  "updated_at": "2024-03-01T12:00:00"
+}
+
+----------------------------------------------------------------
+
+Title: Delete Task
+Description: Delete a task
+Method: DELETE
+URL: /api/tasks/{task_id}
+
+CURL Command:
+curl -X DELETE "http://localhost:8000/api/tasks/1" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+Expected Response:
+{
+  "statusCode": 200,
+  "status": true,
+  "message": "Task deleted successfully"
+}
+
+----------------------------------------------------------------
+
+Title: Get All Task Icons
+Description: Get all available task icons
+Method: GET
+URL: /api/tasks/icons/
+
+CURL Command:
+curl -X GET "http://localhost:8000/api/tasks/icons/"
+
+Expected Response:
+[
+  {
+    "id": 1,
+    "icon_name": "homework",
+    "icon_path": "/icons/homework.png",
+    "created_at": "2024-03-01T09:00:00"
+  },
+  {
+    "id": 2,
+    "icon_name": "cleaning",
+    "icon_path": "/icons/cleaning.png",
+    "created_at": "2024-03-01T09:00:00"
+  }
+]
+
+================================================================
+5. REMINDERS ENDPOINTS
+================================================================
+
+Title: Get All Reminders
+Description: Get all reminders with optional filtering and search
+Method: GET
+URL: /api/reminders/
+
+CURL Command (Basic):
+curl -X GET "http://localhost:8000/api/reminders/" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+CURL Command (With Filters):
+curl -X GET "http://localhost:8000/api/reminders/?limit=10&offset=0&search=medicine&active=true&family_member_id=1&date_from=2024-01-01&date_to=2024-12-31" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+Expected Response:
+[
+  {
+    "id": 1,
+    "title": "Take Medicine",
+    "message": "Take daily vitamins",
+    "family_member_id": 1,
+    "parent_id": 1,
+    "reminder_time": "08:00:00",
+    "repeat_type": "daily",
+    "is_active": true,
+    "audio_file": null,
+    "created_at": "2024-03-01T10:00:00",
+    "updated_at": "2024-03-01T10:00:00"
+  }
+]
+
+----------------------------------------------------------------
+
+Title: Get Reminder by ID
+Description: Get a specific reminder by ID
+Method: GET
+URL: /api/reminders/{reminder_id}
+
+CURL Command:
+curl -X GET "http://localhost:8000/api/reminders/1" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+Expected Response:
+{
+  "id": 1,
+  "title": "Take Medicine",
+  "message": "Take daily vitamins",
+  "family_member_id": 1,
+  "parent_id": 1,
+  "reminder_time": "08:00:00",
+  "repeat_type": "daily",
+  "is_active": true,
+  "audio_file": null,
+  "created_at": "2024-03-01T10:00:00",
+  "updated_at": "2024-03-01T10:00:00"
+}
+
+----------------------------------------------------------------
+
+Title: Create Reminder
+Description: Create a new reminder
+Method: POST
+URL: /api/reminders/add
+
+CURL Command:
+curl -X POST "http://localhost:8000/api/reminders/add" \
+  --header "Content-Type: application/json" \
+  --header "token: YOUR_JWT_TOKEN_HERE" \
+  --data '{
+    "title": "Drink Water",
+    "message": "Remember to drink water",
+    "family_member_id": 1,
+    "reminder_time": "09:00:00",
+    "repeat_type": "hourly",
+    "is_active": true,
+    "audio_file": null
+  }'
+
+Expected Response:
+{
+  "id": 2,
+  "title": "Drink Water",
+  "message": "Remember to drink water",
+  "family_member_id": 1,
+  "parent_id": 1,
+  "reminder_time": "09:00:00",
+  "repeat_type": "hourly",
+  "is_active": true,
+  "audio_file": null,
+  "created_at": "2024-03-01T11:00:00",
+  "updated_at": "2024-03-01T11:00:00"
+}
+
+================================================================
+6. HOME ESSENTIALS ENDPOINTS
+================================================================
+
+Title: Get All Home Essential Items
+Description: Get all home essential items
+Method: GET
+URL: /api/home-essentials/
+
+CURL Command:
+curl -X GET "http://localhost:8000/api/home-essentials/" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+Expected Response:
+[
+  {
+    "id": 1,
+    "item_name": "Toilet Paper",
+    "category": "bathroom",
+    "priority": "high",
+    "quantity": 10,
+    "user_id": 1,
+    "created_at": "2024-03-01T10:00:00"
+  }
+]
+
+----------------------------------------------------------------
+
+Title: Add Home Essential Item
+Description: Add a new home essential item
+Method: POST
+URL: /api/home-essentials/add
+
+CURL Command:
+curl -X POST "http://localhost:8000/api/home-essentials/add" \
+  --header "Content-Type: application/json" \
+  --header "token: YOUR_JWT_TOKEN_HERE" \
+  --data '{
+    "item_name": "Laundry Detergent",
+    "category": "laundry",
+    "priority": "medium",
+    "quantity": 2
+  }'
+
+Expected Response:
+{
+  "id": 2,
+  "item_name": "Laundry Detergent",
+  "category": "laundry",
+  "priority": "medium",
+  "quantity": 2,
+  "user_id": 1,
+  "created_at": "2024-03-01T11:00:00"
+}
+
+================================================================
+7. GROCERIES ENDPOINTS
+================================================================
+
+Title: Get All Grocery Items
+Description: Get all grocery items
+Method: GET
+URL: /api/groceries/
+
+CURL Command:
+curl -X GET "http://localhost:8000/api/groceries/" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+Expected Response:
+[
+  {
+    "id": 1,
+    "item_name": "Milk",
+    "category": "dairy",
+    "quantity": 2,
+    "unit": "liters",
+    "brand": "Organic Valley",
+    "user_id": 1,
+    "created_at": "2024-03-01T10:00:00"
+  }
+]
+
+----------------------------------------------------------------
+
+Title: Add Grocery Item
+Description: Add a new grocery item
+Method: POST
+URL: /api/groceries/add
+
+CURL Command:
+curl -X POST "http://localhost:8000/api/groceries/add" \
+  --header "Content-Type: application/json" \
+  --header "token: YOUR_JWT_TOKEN_HERE" \
+  --data '{
+    "item_name": "Bread",
+    "category": "bakery",
+    "quantity": 1,
+    "unit": "loaf",
+    "brand": "Wonder Bread"
+  }'
+
+Expected Response:
+{
+  "id": 2,
+  "item_name": "Bread",
+  "category": "bakery",
+  "quantity": 1,
+  "unit": "loaf",
+  "brand": "Wonder Bread",
+  "user_id": 1,
+  "created_at": "2024-03-01T11:00:00"
+}
+
+================================================================
+8. GROCERY HOME ESSENTIALS LIST ENDPOINTS
+================================================================
+
+Title: Get User's Grocery & Home Essential List
+Description: Get parent's consolidated grocery & home essential list
+Method: GET
+URL: /api/grocery-home-essentials/
+
+CURL Command:
+curl -X GET "http://localhost:8000/api/grocery-home-essentials/" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+Expected Response:
+{
+  "id": 1,
+  "user_id": 1,
+  "grocery_items": [1, 2, 3],
+  "home_essential_items": [1, 2],
+  "created_at": "2024-03-01T10:00:00",
+  "updated_at": "2024-03-01T12:00:00"
+}
+
+----------------------------------------------------------------
+
+Title: Update User's List
+Description: Update parent's grocery & home essential list
+Method: PUT
+URL: /api/grocery-home-essentials/update
+
+CURL Command:
+curl -X PUT "http://localhost:8000/api/grocery-home-essentials/update" \
+  --header "Content-Type: application/json" \
+  --header "token: YOUR_JWT_TOKEN_HERE" \
+  --data '{
+    "grocery_items": [1, 2, 3, 4],
+    "home_essential_items": [1, 2, 3]
+  }'
+
+Expected Response:
+{
+  "id": 1,
+  "user_id": 1,
+  "grocery_items": [1, 2, 3, 4],
+  "home_essential_items": [1, 2, 3],
+  "created_at": "2024-03-01T10:00:00",
+  "updated_at": "2024-03-01T13:00:00"
+}
+
+----------------------------------------------------------------
+
+Title: Clear User's List
+Description: Clear all items from parent's grocery & home essential list
+Method: DELETE
+URL: /api/grocery-home-essentials/clear
+
+CURL Command:
+curl -X DELETE "http://localhost:8000/api/grocery-home-essentials/clear" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+Expected Response:
+{
+  "statusCode": 200,
+  "status": true,
+  "message": "List cleared successfully"
+}
+
+================================================================
+9. REWARDS ENDPOINTS
+================================================================
+
+Title: Get All Rewards
+Description: Get all rewards with pagination
+Method: GET
+URL: /api/rewards/
+
+CURL Command:
+curl -X GET "http://localhost:8000/api/rewards/?limit=10&offset=0" \
+  --header "token: YOUR_JWT_TOKEN_HERE"
+
+Expected Response:
+[
+  {
+    "id": 1,
+    "reward_name": "Extra TV Time",
+    "description": "30 minutes of extra screen time",
+    "points_required": 100,
+    "user_id": 1,
+    "created_at": "2024-03-01T10:00:00"
+  }
+]
+
+----------------------------------------------------------------
+
+Title: Create Reward
+Description: Create a new reward
+Method: POST
+URL: /api/rewards/add
+
+CURL Command:
+curl -X POST "http://localhost:8000/api/rewards/add" \
+  --header "Content-Type: application/json" \
+  --header "token: YOUR_JWT_TOKEN_HERE" \
+  --data '{
+    "reward_name": "Ice Cream",
+    "description": "A scoop of favorite ice cream",
+    "points_required": 50
+  }'
+
+Expected Response:
+{
+  "id": 2,
+  "reward_name": "Ice Cream",
+  "description": "A scoop of favorite ice cream",
+  "points_required": 50,
+  "user_id": 1,
+  "created_at": "2024-03-01T11:00:00"
+}
+
+================================================================
+10. SCREEN SAVERS ENDPOINTS
+================================================================
+
+Title: Get All Screen Savers
+Description: Get all screen savers (public endpoint)
+Method: GET
+URL: /api/screen-savers/
+
+CURL Command:
+curl -X GET "http://localhost:8000/api/screen-savers/?limit=10&offset=0"
+
+Expected Response:
+[
+  {
+    "id": 1,
+    "name": "Nature Scene",
+    "image_url": "/images/nature_scene.jpg",
+    "category": "nature",
+    "created_at": "2024-03-01T10:00:00"
+  }
+]
+
+----------------------------------------------------------------
+
+Title: Get Screen Saver by ID
+Description: Get a specific screen saver by ID
+Method: GET
+URL: /api/screen-savers/{item_id}
+
+CURL Command:
+curl -X GET "http://localhost:8000/api/screen-savers/1"
+
+Expected Response:
+{
+  "id": 1,
+  "name": "Nature Scene",
+  "image_url": "/images/nature_scene.jpg",
+  "category": "nature",
+  "created_at": "2024-03-01T10:00:00"
+}
+
+----------------------------------------------------------------
+
+Title: Create Screen Saver
+Description: Create a new screen saver
+Method: POST
+URL: /api/screen-savers/add
+
+CURL Command:
+curl -X POST "http://localhost:8000/api/screen-savers/add" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "name": "Ocean Waves",
+    "image_url": "/images/ocean_waves.jpg",
+    "category": "nature"
+  }'
+
+Expected Response:
+{
+  "id": 2,
+  "name": "Ocean Waves",
+  "image_url": "/images/ocean_waves.jpg",
+  "category": "nature",
+  "created_at": "2024-03-01T11:00:00"
+}
+
+================================================================
+11. FILE UPLOAD ENDPOINT
+================================================================
+
+Title: File Upload
+Description: Global file upload endpoint for various categories
+Method: POST
+URL: /api/upload/
+
+CURL Command:
+curl -X POST "http://localhost:8000/api/upload/" \
+  --header "token: YOUR_JWT_TOKEN_HERE" \
+  --form "category=task_icons" \
+  --form "file=@/path/to/your/file.jpg"
+
+Categories Available:
+- task_icons: For task icon images
+- task_audio: For task audio files
+- reminder_audio: For reminder audio files
+- profile_images: For parent profile images
+- documents: For document uploads
+
+Expected Response:
+{
+  "statusCode": 200,
+  "status": true,
+  "message": "File uploaded successfully",
+  "data": {
+    "id": 1,
+    "filename": "uploaded_file.jpg",
+    "file_path": "/uploads/task_icons/uploaded_file.jpg",
+    "file_size": 153600,
+    "mime_type": "image/jpeg",
+    "category": "task_icons",
+    "uploaded_at": "2024-03-01T12:00:00"
+  }
+}
+
+================================================================
+COMMON ERROR RESPONSES
+================================================================
+
+400 Bad Request:
+{
+  "statusCode": 400,
+  "status": false,
+  "message": "Bad request: Invalid input data",
+  "data": null
+}
+
+401 Unauthorized:
+{
+  "statusCode": 401,
+  "status": false,
+  "message": "Unauthorized: Invalid or missing token",
+  "data": null
+}
+
+403 Forbidden:
+{
+  "statusCode": 403,
+  "status": false,
+  "message": "Forbidden: Insufficient permissions",
+  "data": null
+}
+
+404 Not Found:
+{
+  "statusCode": 404,
+  "status": false,
+  "message": "Resource not found",
+  "data": null
+}
+
+422 Validation Error:
+{
+  "statusCode": 422,
+  "status": false,
+  "message": "Validation Error: email is required",
+  "data": null
+}
+
+500 Internal Server Error:
+{
+  "statusCode": 500,
+  "status": false,
+  "message": "Internal server error. Please try again later.",
+  "data": null
+}
+
+================================================================
+NOTES
+================================================================
+
+1. Replace YOUR_JWT_TOKEN_HERE with the actual JWT token received from login
+2. Replace ADMIN_JWT_TOKEN_HERE with an admin user's JWT token for admin endpoints
+3. All dates should be in YYYY-MM-DD format
+4. All times should be in HH:MM:SS format (24-hour format)
+5. File uploads require multipart/form-data content type
+6. All JSON requests require Content-Type: application/json header
+7. The server runs on localhost:8000 by default
+8. API prefix is /api for all endpoints except the root status endpoint
+
+================================================================
+END OF DOCUMENTATION
+================================================================

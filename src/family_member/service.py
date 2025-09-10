@@ -13,7 +13,7 @@ def get_all_family_members(db: Session, token: str):
     members = db.execute(
         select(FamilyMember).where(FamilyMember.user_id == user_id)
     ).scalars().all()
-    
+
     print("Fetched Members:", members)
     return members
 
@@ -63,7 +63,8 @@ def update_family_member(db: Session, family_member_id: int, updated_data: Famil
         raise HTTPException(status_code=404, detail="Family member not found or unauthorized")
 
     for field, value in updated_data.dict().items():
-        setattr(member, field, value)
+        if value is not None:
+            setattr(member, field, value)
 
     db.commit()
     db.refresh(member)

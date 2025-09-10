@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 from datetime import datetime, timedelta
 import jwt
 from passlib.context import CryptContext
-from ..admin_users.models import User, FamilyMember, UserCreate, UserLogin
+from ..admin_users.models import User, FamilyMember, UserCreate, UserLogin, Admin
 from ..config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 logger = logging.getLogger(__name__)
@@ -52,9 +52,9 @@ def create_user(db: Session, user_data: UserCreate) -> Dict:
         return {
             "statusCode": 200,
             "status": True,
-            "message": "User registered successfully",
+            "message": "Parent registered successfully",
             "data": {
-                "user": {
+                "parent": {
                     "id": new_user.id,
                     "full_name": new_user.full_name,
                     "email": new_user.email,
@@ -79,6 +79,7 @@ def create_user(db: Session, user_data: UserCreate) -> Dict:
         raise HTTPException(status_code=500, detail=f"Signup failed: {str(e)}")
 
 def login_user(db: Session, user_data: UserLogin) -> Dict:
+    """Login function for regular parents - searches parents table"""
     try:
         result = db.execute(select(User).where(User.email == user_data.email))
         user = result.scalars().first()
@@ -95,7 +96,7 @@ def login_user(db: Session, user_data: UserLogin) -> Dict:
             "status": True,
             "message": "Login successful",
             "data": {
-                "user": {
+                "parent": {
                     "id": user.id,
                     "email": user.email,
                     "full_name": user.full_name
@@ -109,3 +110,91 @@ def login_user(db: Session, user_data: UserLogin) -> Dict:
     except Exception as e:
         logger.error(f"Login error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}")
+
+def login_admin(db: Session, user_data: UserLogin) -> Dict:
+    """Login function specifically for admin users - searches admin table"""
+    try:
+        result = db.execute(select(Admin).where(Admin.email == user_data.email))
+        admin = result.scalars().first()
+
+        if not admin or not verify_password(user_data.password, admin.password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+
+        token = create_access_token(
+            data={"id": str(admin.id), "email": admin.email, "role": "admin"}
+        )
+
+        return {
+            "statusCode": 200,
+            "status": True,
+            "message": "Admin login successful",
+            "data": {
+                "admin": {
+                    "id": admin.id,
+                    "email": admin.email,
+                    "full_name": admin.full_name
+                },
+                "access_token": token,
+                "token_type": "bearer"
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin login error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Admin login failed: {str(e)}")
+
+    # --- CRUD for admin user ---
+
+def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
+    """Get parent user by ID"""
+    return db.get(User, user_id)
+
+def get_admin_by_id(db: Session, admin_id: int) -> Optional[Admin]:
+    """Get admin user by ID"""
+    return db.get(Admin, admin_id)
+
+def update_user(db: Session, user_id: int, user_data: UserCreate) -> Optional[User]:
+    """Update parent user"""
+    user = db.get(User, user_id)
+    if not user:
+        return None
+    user.full_name = user_data.full_name
+    user.email = user_data.email
+    user.password = get_password_hash(user_data.password)
+    db.commit()
+    db.refresh(user)
+    return user
+
+def update_admin(db: Session, admin_id: int, user_data: UserCreate) -> Optional[Admin]:
+    """Update admin user"""
+    admin = db.get(Admin, admin_id)
+    if not admin:
+        return None
+    admin.full_name = user_data.full_name
+    admin.email = user_data.email
+    admin.password = get_password_hash(user_data.password)
+    db.commit()
+    db.refresh(admin)
+    return admin
+
+def delete_user(db: Session, user_id: int) -> bool:
+    """Delete parent user"""
+    user = db.get(User, user_id)
+    if not user:
+        return False
+    db.delete(user)
+    db.commit()
+    return True
+
+def delete_admin(db: Session, admin_id: int) -> bool:
+    """Delete admin user"""
+    admin = db.get(Admin, admin_id)
+    if not admin:
+        return False
+    db.delete(admin)
+    db.commit()
+    return True
+
+# Alias for backward compatibility
+hash_password = get_password_hash
