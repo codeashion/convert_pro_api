@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean
 from pydantic import BaseModel
 from ..database import Base
 
@@ -8,14 +8,17 @@ class HomeEssential(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
+    status = Column(Boolean, default=False, nullable=False)
 
 # Pydantic models
 class HomeEssentialCreate(BaseModel):
     name: str
+    status: bool = False
 
 class HomeEssentialOut(BaseModel):
     id: int
     name: str
+    status: bool
 
     class Config:
         from_attributes = True
@@ -26,14 +29,17 @@ class Grocery(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
+    status = Column(Boolean, default=False, nullable=False)
 
 # Pydantic models for Grocery
 class GroceryCreate(BaseModel):
     name: str
+    status: bool = False
 
 class GroceryOut(BaseModel):
     id: int
     name: str
+    status: bool
 
     class Config:
         from_attributes = True
