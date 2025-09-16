@@ -49,12 +49,9 @@ def add_item(db: Session, token: str, data: HomeEssentialCreate):
 def update_item(db: Session, item_id: int, data: HomeEssentialCreate, token: str):
     """Update an existing home essential item"""
     try:
-        verify_token(token)
-        
         item = db.get(HomeEssential, item_id)
         if not item:
             raise HTTPException(status_code=404, detail="Home essential item not found")
-        
         # Check if another item with same name already exists
         existing = db.execute(
             select(HomeEssential).where(
@@ -62,11 +59,10 @@ def update_item(db: Session, item_id: int, data: HomeEssentialCreate, token: str
                 HomeEssential.id != item_id
             )
         ).scalars().first()
-        
         if existing:
             raise HTTPException(status_code=400, detail="Home essential item with this name already exists")
-        
         item.name = data.name
+        item.status = data.status
         db.commit()
         db.refresh(item)
         return item
@@ -194,3 +190,26 @@ def delete_grocery(db: Session, grocery_id: int, token: str):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to delete grocery item: {str(e)}")
+
+
+def delete_true_home_essentials(db: Session, token: str):
+    """Delete all home essential items where status is True"""
+    try:
+        verify_token(token)
+        items = db.execute(select(HomeEssential).where(HomeEssential.status == True)).scalars().all()
+        count = 0
+        for item in items:
+            db.delete(item)
+            count += 1
+        db.commit()
+        return {
+            "statusCode": 200,
+            "status": True,
+            "message": f"Deleted {count} home essential items with status True"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to delete home essential items: {str(e)}")
+

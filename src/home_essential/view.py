@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 from ..database import get_db
@@ -11,7 +12,9 @@ from ..home_essential.service import (
     get_grocery_by_id,
     add_grocery,
     update_grocery,
-    delete_grocery
+    delete_grocery, 
+    delete_true_home_essentials
+  
 )
 from ..home_essential.model import HomeEssentialCreate, HomeEssentialOut, GroceryCreate, GroceryOut
 
@@ -43,11 +46,15 @@ def update(item_id: int, data: HomeEssentialCreate, db: Session = Depends(get_db
     return update_item(db, item_id, data, token)
 
 
+@router.delete("/delete-true-status")
+def delete_true_status_home_essentials(db: Session = Depends(get_db), token: str = Header(...)):
+    """Delete all home essential items with status True"""
+    return delete_true_home_essentials(db, token)
+
 @router.delete("/{item_id}")
 def delete(item_id: int, db: Session = Depends(get_db), token: str = Header(...)):
     """Delete a home essential item"""
     return delete_item(db, item_id, token)
-
 
 # Grocery Router
 grocery_router = APIRouter(prefix="/groceries", tags=["groceries"])
