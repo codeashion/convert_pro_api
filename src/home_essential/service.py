@@ -11,7 +11,6 @@ def get_all_items(db: Session, token: str):
     verify_token(token)  # Just verify token, no user-specific filtering needed
     return db.execute(select(HomeEssential)).scalars().all()
 
-
 def get_item_by_id(db: Session, item_id: int, token: str):
     """Get a specific home essential item by ID"""
     verify_token(token)
@@ -19,7 +18,6 @@ def get_item_by_id(db: Session, item_id: int, token: str):
     if not item:
         raise HTTPException(status_code=404, detail="Home essential item not found")
     return item
-
 
 def add_item(db: Session, token: str, data: HomeEssentialCreate):
     """Add a new home essential item"""
@@ -44,7 +42,6 @@ def add_item(db: Session, token: str, data: HomeEssentialCreate):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to add home essential item: {str(e)}")
-
 
 def update_item(db: Session, item_id: int, data: HomeEssentialCreate, token: str):
     """Update an existing home essential item"""
@@ -72,7 +69,6 @@ def update_item(db: Session, item_id: int, data: HomeEssentialCreate, token: str
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to update home essential item: {str(e)}")
 
-
 def delete_item(db: Session, item_id: int, token: str):
     """Delete a home essential item"""
     try:
@@ -95,6 +91,27 @@ def delete_item(db: Session, item_id: int, token: str):
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to delete home essential item: {str(e)}")
 
+def delete_true_home_essentials(db: Session, token: str):
+    """Delete all home essential items where status is True"""
+    try:
+        verify_token(token)
+        items = db.execute(select(HomeEssential).where(HomeEssential.status == True)).scalars().all()
+        count = 0
+        for item in items:
+            db.delete(item)
+            count += 1
+        db.commit()
+        return {
+            "statusCode": 200,
+            "status": True,
+            "message": f"Deleted {count} home essential items with status True"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to delete home essential items: {str(e)}")
+
 
 # Grocery CRUD Functions
 
@@ -103,7 +120,6 @@ def get_all_groceries(db: Session, token: str):
     verify_token(token)  # Just verify token, no user-specific filtering needed
     return db.execute(select(Grocery)).scalars().all()
 
-
 def get_grocery_by_id(db: Session, grocery_id: int, token: str):
     """Get a specific grocery item by ID"""
     verify_token(token)
@@ -111,7 +127,6 @@ def get_grocery_by_id(db: Session, grocery_id: int, token: str):
     if not grocery:
         raise HTTPException(status_code=404, detail="Grocery item not found")
     return grocery
-
 
 def add_grocery(db: Session, token: str, data: GroceryCreate):
     """Add a new grocery item"""
@@ -137,7 +152,6 @@ def add_grocery(db: Session, token: str, data: GroceryCreate):
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to add grocery item: {str(e)}")
 
-
 def update_grocery(db: Session, grocery_id: int, data: GroceryCreate, token: str):
     """Update an existing grocery item"""
     try:
@@ -159,6 +173,7 @@ def update_grocery(db: Session, grocery_id: int, data: GroceryCreate, token: str
             raise HTTPException(status_code=400, detail="Grocery item with this name already exists")
         
         grocery.name = data.name
+        grocery.status = data.status
         db.commit()
         db.refresh(grocery)
         return grocery
@@ -167,7 +182,6 @@ def update_grocery(db: Session, grocery_id: int, data: GroceryCreate, token: str
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to update grocery item: {str(e)}")
-
 
 def delete_grocery(db: Session, grocery_id: int, token: str):
     """Delete a grocery item"""
@@ -191,12 +205,11 @@ def delete_grocery(db: Session, grocery_id: int, token: str):
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to delete grocery item: {str(e)}")
 
-
-def delete_true_home_essentials(db: Session, token: str):
-    """Delete all home essential items where status is True"""
+def delete_true_groceries(db: Session, token: str):
+    """Delete all groceries items where status is True"""
     try:
         verify_token(token)
-        items = db.execute(select(HomeEssential).where(HomeEssential.status == True)).scalars().all()
+        items = db.execute(select(Grocery).where(Grocery.status == True)).scalars().all()
         count = 0
         for item in items:
             db.delete(item)
@@ -205,11 +218,10 @@ def delete_true_home_essentials(db: Session, token: str):
         return {
             "statusCode": 200,
             "status": True,
-            "message": f"Deleted {count} home essential items with status True"
+            "message": f"Deleted {count} grocery items with status True"
         }
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to delete home essential items: {str(e)}")
-
+        raise HTTPException(status_code=500, detail=f"Failed to delete grocery items: {str(e)}")

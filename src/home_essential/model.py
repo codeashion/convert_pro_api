@@ -48,6 +48,7 @@ class GroceryOut(BaseModel):
 class GroceryOut(BaseModel):
     id: int
     name: str
+    status: bool
 
     class Config:
         from_attributes = True
