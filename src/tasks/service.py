@@ -11,53 +11,27 @@ import logging
 logger = logging.getLogger(__name__)
 
 def get_all_tasks(
-    db: Session, 
-    token: str, 
-    limit: int = 100, 
-    offset: int = 0,
-    search: Optional[str] = None,
-    completed: Optional[bool] = None,
-    family_member_id: Optional[int] = None,
-    date_from: Optional[str] = None,
-    date_to: Optional[str] = None
+    db: Session,
+    token: str,
+    date: str,
+    family_member_id: Optional[int] = None
 ) -> List[TaskOut]:
-    """Get all tasks for the authenticated parent with optional filtering"""
+    """Get all tasks for the authenticated parent filtered by date (required) and family member (optional)"""
     try:
         payload = verify_token(token)
         user_id = int(payload["id"])
-        
-        # Start with base query
-        query = select(Task).where(Task.user_id == user_id)
-        
-        # Apply search filter
-        if search:
-            search_pattern = f"%{search}%"
-            query = query.where(
-                (Task.title.like(search_pattern)) | 
-                (Task.message.like(search_pattern))
-            )
-        
-        # Apply completion status filter
-        if completed is not None:
-            query = query.where(Task.is_completed == completed)
-            
-        # Apply date range filter
-        if date_from:
-            from datetime import datetime
-            date_from_obj = datetime.strptime(date_from, "%Y-%m-%d").date()
-            query = query.where(Task.task_date >= date_from_obj)
-            
-        if date_to:
-            from datetime import datetime
-            date_to_obj = datetime.strptime(date_to, "%Y-%m-%d").date()
-            query = query.where(Task.task_date <= date_to_obj)
-        
-        # Apply ordering and pagination
-        query = query.order_by(Task.task_date.desc(), Task.task_time.desc())
-        query = query.limit(limit).offset(offset)
-        
+
+        from datetime import datetime
+        date_obj = datetime.strptime(date, "%Y-%m-%d").date()
+
+        # Start with base query: filter by user and date
+        query = select(Task).where(Task.user_id == user_id, Task.task_date == date_obj)
+
+        # Apply ordering
+        query = query.order_by(Task.task_time.desc())
+
         tasks = db.execute(query).scalars().all()
-        
+
         result = []
         for task in tasks:
             # Get assigned family members
@@ -66,7 +40,7 @@ def get_all_tasks(
                 .join(FamilyMember, TaskAssignment.family_member_id == FamilyMember.id)
                 .where(TaskAssignment.task_id == task.id)
             ).all()
-            
+
             assigned_members = [
                 TaskAssignmentOut(
                     id=assignment.id,
@@ -76,13 +50,12 @@ def get_all_tasks(
                 )
                 for assignment, member in assignments
             ]
-            
+
             # Apply family member filter if specified
             if family_member_id is not None:
-                # Check if this task is assigned to the specified family member
                 if not any(am.family_member_id == family_member_id for am in assigned_members):
                     continue
-            
+
             task_dict = {
                 "id": task.id,
                 "title": task.title,
@@ -102,11 +75,11 @@ def get_all_tasks(
                 "updated_at": task.updated_at,
                 "assigned_family_members": assigned_members
             }
-            
+
             result.append(TaskOut(**task_dict))
-        
+
         return result
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

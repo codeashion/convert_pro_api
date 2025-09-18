@@ -13,18 +13,13 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 @router.get("/", response_model=List[TaskOut])
 def get_tasks_endpoint(
-    limit: int = 100, 
-    offset: int = 0,
-    search: Optional[str] = None,  # Search in title or message
-    completed: Optional[bool] = None,  # Filter by completion status
-    family_member_id: Optional[int] = None,  # Filter by assigned family member
-    date_from: Optional[str] = None,  # Filter by date range (YYYY-MM-DD)
-    date_to: Optional[str] = None,  # Filter by date range (YYYY-MM-DD)
-    db: Session = Depends(get_db), 
+    date: str,  # Required date in YYYY-MM-DD
+    family_member_id: Optional[int] = None,  # Optional filter by assigned family member
+    db: Session = Depends(get_db),
     token: str = Header(...)
 ):
-    """Get all tasks with optional search and filtering"""
-    return get_all_tasks(db, token, limit, offset, search, completed, family_member_id, date_from, date_to)
+    """Get all tasks filtered by date (required) and family member (optional)"""
+    return get_all_tasks(db, token, date, family_member_id)
 
 @router.get("/{task_id}", response_model=TaskOut)
 def get_task_endpoint(

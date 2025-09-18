@@ -6,7 +6,10 @@ from typing import List, Optional
 from datetime import date
 from ..database import Base
 
-# Dedicated Admin table
+# ---------------------------
+# SQLAlchemy Models
+# ---------------------------
+
 class Admin(Base):
     __tablename__ = "admin"
 
@@ -16,13 +19,7 @@ class Admin(Base):
     password = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-from pydantic import BaseModel, Field, validator
-from typing import List, Optional
-from datetime import date
-from ..database import Base
+
 
 class User(Base):
     __tablename__ = "parents"
@@ -59,6 +56,7 @@ class FamilyMember(Base):
 
     user = relationship("User", back_populates="family_members")
 
+
 # ---------------------------
 # Pydantic Schemas
 # ---------------------------
@@ -71,11 +69,13 @@ class FamilyMemberCreate(BaseModel):
     image_path: Optional[str] = None
     voice_recording: Optional[str] = None
 
+
 class FamilyMemberOut(FamilyMemberCreate):
     id: int
 
     class Config:
         orm_mode = True
+
 
 # ---- User ----
 class UserCreate(BaseModel):
@@ -92,19 +92,23 @@ class UserCreate(BaseModel):
             raise ValueError("Passwords do not match")
         return v
 
+
 class UserLogin(BaseModel):
     email: str
     password: str
 
+
 # Firebase Login Models
 class FirebaseLoginRequest(BaseModel):
     id_token: str  # Firebase ID token
+
 
 class FirebaseLoginResponse(BaseModel):
     statusCode: int = 200
     status: bool = True
     message: str
     data: dict
+
 
 class UserOut(BaseModel):
     id: int
@@ -116,6 +120,23 @@ class UserOut(BaseModel):
     class Config:
         orm_mode = True
 
+
 # Alias/derivative for clarity in API schemas
 class ParentOut(UserOut):
     pass
+
+from datetime import datetime
+from typing import Optional
+
+class LeaderboardMemberOut(BaseModel):
+    id: int
+    family_member_id: int
+    member_name: str
+    image_path: Optional[str]
+    date_of_birth: Optional[datetime]
+    assigned_colour: Optional[str]
+    voice_recording: Optional[str]
+    total_points: int
+
+    class Config:
+        from_attributes = True
