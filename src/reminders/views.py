@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..reminders.service import (
     get_all_reminders, get_reminder_by_id, create_reminder, update_reminder, 
-    delete_reminder
+    delete_reminder, get_upcoming_reminders, get_upcoming_monthly_reminders
 )
 from ..reminders.models import ReminderCreate, ReminderUpdate, ReminderOut
 from ..database import get_db
@@ -24,6 +24,22 @@ def get_reminders_endpoint(
 ):
     """Get all reminders with optional search and filtering"""
     return get_all_reminders(db, token, limit, offset, search, active, family_member_id, date_from, date_to)
+
+@router.get("/upcoming", response_model=List[dict])
+def get_upcoming_reminders_endpoint(
+    db: Session = Depends(get_db),
+    token: str = Header(...)
+):
+    """Get upcoming reminders for the next week (title and formatted time only)"""
+    return get_upcoming_reminders(db, token)
+
+@router.get("/upcoming-monthly", response_model=List[dict])
+def get_upcoming_monthly_reminders_endpoint(
+    db: Session = Depends(get_db),
+    token: str = Header(...)
+):
+    """Get upcoming reminders for the rest of the month (title, time, color, date, display)"""
+    return get_upcoming_monthly_reminders(db, token)
 
 @router.get("/{reminder_id}", response_model=ReminderOut)
 def get_reminder_endpoint(
@@ -61,4 +77,3 @@ def delete_reminder_endpoint(
 ):
     """Delete a reminder"""
     return delete_reminder(db, token, reminder_id)
-

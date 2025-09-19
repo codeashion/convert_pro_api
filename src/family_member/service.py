@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from sqlalchemy import select
 from ..admin_users.models import User, FamilyMember, FamilyMemberCreate 
-from ..family_member_points.model import FamilyMemberPoints
-from ..auth import verify_token
+from ..family_member_points.model import FamilyMemberPoints 
+from ..auth import verify_token 
 
 def get_all_family_members(db: Session, token: str):
     token_data = verify_token(token)

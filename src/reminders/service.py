@@ -1,3 +1,4 @@
+from datetime import timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import select, and_
 from fastapi import HTTPException, status
@@ -326,3 +327,122 @@ def delete_reminder(db: Session, token: str, reminder_id: int) -> dict:
             detail=f"Failed to delete reminder: {str(e)}"
         )
 
+def get_upcoming_reminders(db: Session, token: str) -> list:
+    """Get upcoming reminders for the next week, return title and formatted time string"""
+    try:
+        token_data = verify_token(token)
+        user_id = int(token_data.get("id"))
+        print("Decoded User ID:", user_id)
+        now = datetime.now()
+        today = now.date()
+        next_week = today + timedelta(days=7)
+
+        # Query for reminders from today to next week
+        query = select(Reminder).where(
+            Reminder.user_id == user_id,
+            Reminder.reminder_date >= today,
+            Reminder.reminder_date <= next_week,
+            Reminder.is_active == True
+        ).order_by(Reminder.reminder_date.asc(), Reminder.reminder_time.asc())
+
+        reminders = db.execute(query).scalars().all()
+        result = []
+        for reminder in reminders:
+            # Only include today's reminders if time is after now
+            if reminder.reminder_date == today and reminder.reminder_time <= now.time():
+                continue
+            # Get family member assigned color
+            family_member = db.execute(
+                select(FamilyMember).where(FamilyMember.id == reminder.family_member_id, FamilyMember.user_id == user_id)
+            ).scalars().first()
+            assigned_color = getattr(family_member, "assigned_colour", None) if family_member else None
+
+            # Format time as '10:00 AM'
+            time_str = reminder.reminder_time.strftime('%I:%M %p')
+
+            reminder_dt = datetime.combine(reminder.reminder_date, reminder.reminder_time)
+            day_name = reminder_dt.strftime('%A')
+            if reminder.reminder_date == today:
+                day_str = f"Today at {time_str}"
+            elif reminder.reminder_date == today + timedelta(days=1):
+                day_str = f"Tomorrow at {time_str}"
+            else:
+                day_str = f"{day_name}, {time_str}"
+            date_str = reminder.reminder_date.strftime('%d %B %Y')
+            result.append({
+                "title": reminder.title,
+                "time": time_str,
+                "display": day_str,
+                "assigned_colour": assigned_color,
+                "date": date_str
+            })
+        return result 
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve upcoming reminders: {str(e)}"
+        )
+        
+def get_upcoming_monthly_reminders(db: Session, token: str) -> list:
+    """Get upcoming reminders from today to end of month, same response as weekly"""
+    try:
+        token_data = verify_token(token)
+        user_id = int(token_data.get("id"))
+        print("Decoded User ID:", user_id)
+        now = datetime.now()
+        today = now.date()
+        # Calculate end of month
+        if today.month == 12:
+            end_of_month = today.replace(day=31)
+        else:
+            from calendar import monthrange
+            last_day = monthrange(today.year, today.month)[1]
+            end_of_month = today.replace(day=last_day)
+
+        # Query for reminders from today to end of month
+        query = select(Reminder).where(
+            Reminder.user_id == user_id,
+            Reminder.reminder_date >= today,
+            Reminder.reminder_date <= end_of_month,
+            Reminder.is_active == True
+        ).order_by(Reminder.reminder_date.asc(), Reminder.reminder_time.asc())
+
+        reminders = db.execute(query).scalars().all()
+        result = []
+        for reminder in reminders:
+            # Only include today's reminders if time is after now
+            if reminder.reminder_date == today and reminder.reminder_time <= now.time():
+                continue
+            # Get family member assigned color
+            family_member = db.execute(
+                select(FamilyMember).where(FamilyMember.id == reminder.family_member_id, FamilyMember.user_id == user_id)
+            ).scalars().first()
+            assigned_color = getattr(family_member, "assigned_colour", None) if family_member else None
+
+            # Format time as '10:00 AM'
+            time_str = reminder.reminder_time.strftime('%I:%M %p')
+
+            reminder_dt = datetime.combine(reminder.reminder_date, reminder.reminder_time)
+            day_name = reminder_dt.strftime('%A')
+            if reminder.reminder_date == today:
+                day_str = f"Today at {time_str}"
+            elif reminder.reminder_date == today + timedelta(days=1):
+                day_str = f"Tomorrow at {time_str}"
+            else:
+                day_str = f"{day_name}, {time_str}"
+            date_str = reminder.reminder_date.strftime('%d %B %Y')
+            result.append({
+                "title": reminder.title,
+                "time": time_str,
+                "display": day_str,
+                "assigned_colour": assigned_color,
+                "date": date_str
+            })
+        return result 
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve upcoming monthly reminders: {str(e)}"
+        )       
+        
+        
