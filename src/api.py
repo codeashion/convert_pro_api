@@ -11,6 +11,7 @@ from src.rewards.views import router as rewards_router
 from src.screen_savers.views import router as screen_savers_router
 from src.completed_task.view import router as completed_task_router
 from src.family_member_points.view import router as family_member_points_router
+from src.reward_request_redeem.view import router as reward_request_redeem_router
 
 router = APIRouter()
 
@@ -21,6 +22,7 @@ router.include_router(auth_router)
 
 # Feature modules
 router.include_router(family_member_router)
+router.include_router(reward_request_redeem_router)
 router.include_router(family_member_points_router)
 router.include_router(completed_task_router)
 router.include_router(home_essential_router)
