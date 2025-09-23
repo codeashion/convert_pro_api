@@ -1,10 +1,18 @@
+
 from fastapi import APIRouter, Depends, status, HTTPException, Header
 from sqlalchemy.orm import Session
-from ..auth_users.service import create_user, login_user, get_user_profile, update_user_profile, delete_user_profile, get_all_users, get_user_by_id, update_user_by_id, delete_user_by_id, create_access_token
+from ..auth_users.service import create_user, login_user, get_user_profile, update_user_profile, delete_user_profile, get_all_users, get_user_by_id, update_user_by_id, delete_user_by_id, create_access_token, reset_password
 from ..admin_users.models import UserCreate, UserLogin, UserOut, ParentOut, FirebaseLoginRequest, FirebaseLoginResponse
 from ..database import get_db
 from ..auth import verify_token
 from .social_auth_service import firebase_auth_service
+from pydantic import BaseModel
+
+class PasswordResetRequest(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_new_password: str
+# ============ PROTECTED ENDPOINTS (TOKEN REQUIRED) ============
 
 router = APIRouter(
     prefix="/auth",
@@ -57,6 +65,13 @@ async def firebase_login(login_data: FirebaseLoginRequest, db: Session = Depends
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Firebase login failed: {str(e)}"
         )
+
+
+@router.post("/reset-password", response_model=dict)
+def reset_password_endpoint(request: PasswordResetRequest, db: Session = Depends(get_db), token: str = Header(...)):
+    """Reset password for current user (parent or admin)"""
+    return reset_password(db, token, request.current_password, request.new_password, request.confirm_new_password)
+
 
 # ============ PROTECTED ENDPOINTS (TOKEN REQUIRED) ============
 

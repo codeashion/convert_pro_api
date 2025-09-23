@@ -198,3 +198,50 @@ def delete_admin(db: Session, admin_id: int) -> bool:
 
 # Alias for backward compatibility
 hash_password = get_password_hash
+
+
+def check_user_exists(db: Session, email: str) -> Dict:
+    """
+    Check if a user exists by email. If exists, return all user details (including password) in response format.
+    If not exists, return null in data.
+    """
+    try:
+        result = db.execute(select(User).where(User.email == email))
+        user = result.scalars().first()
+        if user:
+            token = create_access_token(
+                data={"id": str(user.id), "email": user.email}
+            )
+            return {
+                "statusCode": 200,
+                "status": True,
+                "message": "Login successful",
+                "data": {
+                    "parent": {
+                        "id": user.id,
+                        "email": user.email,
+                        "full_name": user.full_name,
+                        "password": user.password,
+                        "profile_image": user.profile_image,
+                        "google_id": user.google_id,
+                        "apple_id": user.apple_id,
+                        "provider": user.provider,
+                        "created_at": user.created_at,
+                        "updated_at": user.updated_at
+                    },
+                    "access_token": token,
+                    "token_type": "bearer"
+                }
+            }
+        else:
+            return {
+                "statusCode": 200,
+                "status": True,
+                "message": "User not found",
+                "data": None
+            }
+    except Exception as e:
+        logger.error(f"Check user exists error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Check user exists failed: {str(e)}")
+
+

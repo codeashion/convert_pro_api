@@ -312,6 +312,56 @@ def require_admin(token: str) -> Dict:
         )
     return payload
 
+
+# ======== PASSWORD RESET FUNCTION ========
+def reset_password(db: Session, token: str, current_password: str, new_password: str, confirm_new_password: str) -> Dict:
+    """
+    Reset password for current user (parent or admin).
+    Checks current password, validates new password, updates if valid.
+    """
+    payload = verify_token(token)
+    user_id = int(payload["id"])
+    user_role = payload.get("role", "parent")
+
+    if new_password != confirm_new_password:
+        return {
+            "statusCode": 400,
+            "status": False,
+            "message": "New password and confirm password do not match.",
+            "data": None
+        }
+
+    if user_role == "admin":
+        user = db.get(Admin, user_id)
+    else:
+        user = db.get(User, user_id)
+
+    if not user:
+        return {
+            "statusCode": 404,
+            "status": False,
+            "message": "User not found.",
+            "data": None
+        }
+
+    if not verify_password(current_password, user.password):
+        return {
+            "statusCode": 401,
+            "status": False,
+            "message": "Current password is incorrect.",
+            "data": None
+        }
+
+    user.password = get_password_hash(new_password)
+    db.commit()
+    db.refresh(user)
+    return {
+        "statusCode": 200,
+        "status": True,
+        "message": "Password reset successful.",
+        "data": None
+    }
+
 def get_all_users(db: Session, token: str) -> list:
     """Get all parents (admin only)"""
     require_admin(token)
@@ -360,3 +410,5 @@ def delete_user_by_id(db: Session, token: str, user_id: int) -> Dict:
         "message": "Parent deleted successfully",
         "data": None
     }
+
+
