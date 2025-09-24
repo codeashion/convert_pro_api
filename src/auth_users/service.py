@@ -1,3 +1,4 @@
+
 import logging
 from typing import Dict, Optional
 from sqlalchemy.orm import Session
@@ -296,6 +297,9 @@ def delete_user_profile(db: Session, token: str) -> Dict:
             "data": None
         }
 
+
+
+
 # ======== ADMIN-ONLY FUNCTIONS ========
 
 def require_admin(token: str) -> Dict:
@@ -359,6 +363,53 @@ def reset_password(db: Session, token: str, current_password: str, new_password:
         "statusCode": 200,
         "status": True,
         "message": "Password reset successful.",
+        "data": None
+    }
+
+
+# ======== UPDATE PASSWORD BY EMAIL FUNCTION ========
+def update_password_by_email(db: Session, email: str, new_password: str, confirm_new_password: str) -> Dict:
+    """
+    Update password for user (parent or admin) by email. No current password required.
+    """
+    if new_password != confirm_new_password:
+        return {
+            "statusCode": 400,
+            "status": False,
+            "message": "New password and confirm password do not match.",
+            "data": None
+        }
+
+    # Try to find user in Admin table first
+    admin = db.execute(select(Admin).where(Admin.email == email.strip().lower())).scalars().first()
+    if admin:
+        admin.password = get_password_hash(new_password)
+        db.commit()
+        db.refresh(admin)
+        return {
+            "statusCode": 200,
+            "status": True,
+            "message": "Password updated successfully for admin.",
+            "data": None
+        }
+
+    # Try to find user in User table
+    user = db.execute(select(User).where(User.email == email.strip().lower())).scalars().first()
+    if user:
+        user.password = get_password_hash(new_password)
+        db.commit()
+        db.refresh(user)
+        return {
+            "statusCode": 200,
+            "status": True,
+            "message": "Password updated successfully for user.",
+            "data": None
+        }
+
+    return {
+        "statusCode": 404,
+        "status": False,
+        "message": "User with this email not found.",
         "data": None
     }
 

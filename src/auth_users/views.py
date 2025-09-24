@@ -12,8 +12,12 @@ class PasswordResetRequest(BaseModel):
     current_password: str
     new_password: str
     confirm_new_password: str
-# ============ PROTECTED ENDPOINTS (TOKEN REQUIRED) ============
 
+class PasswordUpdateByEmailRequest(BaseModel):
+    email: str
+    new_password: str
+    confirm_new_password: str
+    
 router = APIRouter(
     prefix="/auth",
     tags=["authentication"]
@@ -71,6 +75,13 @@ async def firebase_login(login_data: FirebaseLoginRequest, db: Session = Depends
 def reset_password_endpoint(request: PasswordResetRequest, db: Session = Depends(get_db), token: str = Header(...)):
     """Reset password for current user (parent or admin)"""
     return reset_password(db, token, request.current_password, request.new_password, request.confirm_new_password)
+
+
+@router.post("/update-password-by-email", response_model=dict)
+def update_password_by_email_endpoint(request: PasswordUpdateByEmailRequest, db: Session = Depends(get_db)):
+    """Update password for user (parent or admin) by email. No current password required."""
+    from ..auth_users.service import update_password_by_email
+    return update_password_by_email(db, request.email, request.new_password, request.confirm_new_password)
 
 
 # ============ PROTECTED ENDPOINTS (TOKEN REQUIRED) ============
