@@ -4,11 +4,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database configuration
-DB_USER = os.getenv("DB_USER", "u735495348_calendar")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "1vF=e2*kei")
-DB_HOST = os.getenv("DB_HOST", "srv1751.hstgr.io")
+DB_USER = os.getenv("DB_USER", "sqlyog_user")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "StrongPassword123!")
+DB_HOST = os.getenv("DB_HOST", "168.231.71.192")
 DB_PORT = os.getenv("DB_PORT", "3306")
-DB_NAME = os.getenv("DB_NAME", "u735495348_calendar")
+DB_NAME = os.getenv("DB_NAME", "calendar_db")
 
 
 DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
