@@ -16,6 +16,7 @@ from src.admin_users.views import router as admin_users_router
 from src.calender_tasks.view import router as calender_tasks_router
 from src.photos.view import router as photos_router
 from src.daily_quotes.view import router as daily_quotes_router
+from src.instagram.view import router as instagram_router
 
 router = APIRouter()
 
@@ -25,6 +26,7 @@ router.include_router(auth_router)
 
 # Feature modules
 router.include_router(family_member_router)
+router.include_router(instagram_router)
 router.include_router(daily_quotes_router)
 router.include_router(photos_router)
 router.include_router(calender_tasks_router)
