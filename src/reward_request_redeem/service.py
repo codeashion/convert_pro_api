@@ -56,6 +56,15 @@ def delete_reward_request(db: Session, request_id: int, token: str = None) -> di
 	return {"status": True, "message": "Reward request deleted successfully"}
 
 def get_all_redeemed_requests(db: Session, token: str = None) -> list:
+	from ..admin_users.models import FamilyMember
 	query = select(RewardRequestRedeem).where(RewardRequestRedeem.redeem_status == 1).order_by(RewardRequestRedeem.created_at.desc())
 	rewards = db.execute(query).scalars().all()
-	return [RewardRequestRedeemOut.from_orm(r) for r in rewards]
+	result = []
+	for r in rewards:
+		member = db.query(FamilyMember).filter(FamilyMember.id == r.family_member_id).first()
+		member_name = member.member_name if member else None
+		reward_dict = RewardRequestRedeemOut.from_orm(r).dict()
+		reward_dict["name"] = member_name  # Overwrite the name field with correct family member name
+		reward_dict["family_member_name"] = member_name
+		result.append(reward_dict)
+	return result
