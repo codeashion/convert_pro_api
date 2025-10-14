@@ -5,9 +5,18 @@ from fastapi import HTTPException, status
 from ..reward_request_redeem.model import RewardRequestRedeem, RewardRequestRedeemCreate, RewardRequestRedeemUpdate, RewardRequestRedeemOut
 
 def get_all_reward_requests(db: Session, token: str = None) -> list:
+	from ..admin_users.models import FamilyMember
 	query = select(RewardRequestRedeem).where(RewardRequestRedeem.redeem_status == 0).order_by(RewardRequestRedeem.created_at.desc())
 	rewards = db.execute(query).scalars().all()
-	return [RewardRequestRedeemOut.from_orm(r) for r in rewards]
+	result = []
+	for r in rewards:
+		member = db.query(FamilyMember).filter(FamilyMember.id == r.family_member_id).first()
+		member_name = member.member_name if member else None
+		reward_dict = RewardRequestRedeemOut.from_orm(r).dict()
+		reward_dict["name"] = member_name  # Overwrite the name field with correct family member name
+		reward_dict["family_member_name"] = member_name
+		result.append(reward_dict)
+	return result
 
 def get_reward_request_by_id(db: Session, request_id: int, token: str = None) -> RewardRequestRedeemOut:
 	reward = db.get(RewardRequestRedeem, request_id)
