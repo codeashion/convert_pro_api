@@ -446,3 +446,50 @@ def get_upcoming_monthly_reminders(db: Session, token: str) -> list:
         )       
         
         
+        
+def get_reminders_by_date(db: Session, token: str, date: str) -> list:
+    """Get all reminders for a user on a specific date"""
+    try:
+        token_data = verify_token(token)
+        user_id = int(token_data.get("id"))
+        from datetime import datetime
+        try:
+            date_obj = datetime.strptime(date, "%Y-%m-%d").date()
+        except Exception:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid date format. Use YYYY-MM-DD.")
+
+        query = select(Reminder).where(
+            Reminder.user_id == user_id,
+            Reminder.reminder_date == date_obj
+        ).order_by(Reminder.reminder_time.asc())
+
+        reminders = db.execute(query).scalars().all()
+        result = []
+        for reminder in reminders:
+            family_member = db.execute(
+                select(FamilyMember).where(FamilyMember.id == reminder.family_member_id, FamilyMember.user_id == user_id)
+            ).scalars().first()
+            assigned_color = getattr(family_member, "assigned_colour", None) if family_member else None
+            time_str = reminder.reminder_time.strftime('%I:%M %p')
+            result.append({
+                "id": reminder.id,
+                "title": reminder.title,
+                "reminder_date": reminder.reminder_date,
+                "reminder_time": time_str,
+                "repeat_pattern": reminder.repeat_pattern,
+                "family_member_id": reminder.family_member_id,
+                "assigned_colour": assigned_color,
+                "voice_note": reminder.voice_note,
+                "message": reminder.message,
+                "audio_file": reminder.audio_file,
+                "is_active": reminder.is_active,
+                "created_at": reminder.created_at,
+                "updated_at": reminder.updated_at
+            })
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve reminders by date: {str(e)}"
+        )        
+        

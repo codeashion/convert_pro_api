@@ -1,3 +1,4 @@
+from fastapi import Body
 from fastapi import APIRouter, Depends, status, HTTPException, Header
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -24,6 +25,18 @@ def get_reminders_endpoint(
 ):
     """Get all reminders with optional search and filtering"""
     return get_all_reminders(db, token, limit, offset, search, active, family_member_id, date_from, date_to)
+
+
+from ..reminders.service import get_reminders_by_date
+
+@router.post("/by-date", response_model=List[dict])
+def get_reminders_by_date_endpoint(
+    db: Session = Depends(get_db),
+    token: str = Header(...),
+    date: str = Body(..., embed=True, example="2025-10-15")
+):
+    """Get all reminders for a user on a specific date"""
+    return get_reminders_by_date(db, token, date)
 
 @router.get("/upcoming", response_model=List[dict])
 def get_upcoming_reminders_endpoint(
