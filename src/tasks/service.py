@@ -190,11 +190,29 @@ def create_task(db: Session, token: str, task_data: TaskCreate) -> TaskOut:
             message=task_data.message,
             audio_file=task_data.audio_file
         )
-        
+
         db.add(new_task)
         db.commit()
         db.refresh(new_task)
-        
+
+        # If reminder_enabled, create a reminder
+        if task_data.reminder_enabled:
+            from ..reminders.models import Reminder, ReminderCreate
+            reminder = Reminder(
+                title=task_data.title,
+                reminder_date=task_data.task_date,
+                reminder_time=task_data.task_time,
+                repeat_pattern=task_data.repeat_pattern,
+                family_member_id=task_data.assigned_family_members[0] if task_data.assigned_family_members else None,
+                message=task_data.message,
+                voice_note=task_data.voice_note,
+                audio_file=task_data.audio_file,
+                is_active=True
+            )
+            db.add(reminder)
+            db.commit()
+            db.refresh(reminder)
+
         # Create task assignments
         assigned_members = []
         if task_data.assigned_family_members:
@@ -205,16 +223,14 @@ def create_task(db: Session, token: str, task_data: TaskCreate) -> TaskOut:
                 )
                 db.add(assignment)
                 assigned_members.append(assignment)
-            
             db.commit()
-            
+
             # Get assigned member details
             assigned_member_details = []
             for assignment in assigned_members:
                 member = db.execute(
                     select(FamilyMember).where(FamilyMember.id == assignment.family_member_id)
                 ).scalars().first()
-                
                 assigned_member_details.append(
                     TaskAssignmentOut(
                         id=assignment.id,
@@ -225,7 +241,7 @@ def create_task(db: Session, token: str, task_data: TaskCreate) -> TaskOut:
                 )
         else:
             assigned_member_details = []
-        
+
         task_dict = {
             "id": new_task.id,
             "title": new_task.title,
@@ -245,7 +261,7 @@ def create_task(db: Session, token: str, task_data: TaskCreate) -> TaskOut:
             "updated_at": new_task.updated_at,
             "assigned_family_members": assigned_member_details
         }
-        
+
         return TaskOut(**task_dict)
         
     except HTTPException:
@@ -256,6 +272,7 @@ def create_task(db: Session, token: str, task_data: TaskCreate) -> TaskOut:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create task: {str(e)}"
         )
+
 
 def update_task(db: Session, token: str, task_id: int, task_data: TaskUpdate) -> TaskOut:
     """Update an existing task"""
