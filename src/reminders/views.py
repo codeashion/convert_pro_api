@@ -1,8 +1,8 @@
 from fastapi import Body
 from fastapi import APIRouter, Depends, status, HTTPException, Header
 from sqlalchemy.orm import Session
-from typing import List, Optional
-from ..reminders.service import (
+from typing import List, Optional 
+from ..reminders.service import ( 
     get_all_reminders, get_reminder_by_id, create_reminder, update_reminder, 
     delete_reminder, get_upcoming_reminders, get_upcoming_monthly_reminders
 )
@@ -21,7 +21,7 @@ def get_reminders_endpoint(
     family_member_id: Optional[int] = None,  # Filter by family member
     date_from: Optional[str] = None,  # Filter by date range (YYYY-MM-DD)
     date_to: Optional[str] = None,  # Filter by date range (YYYY-MM-DD)
-    db: Session = Depends(get_db), 
+    db: Session = Depends(get_db),  
     token: str = Header(...)
 ):
     """Get all reminders with optional search and filtering"""

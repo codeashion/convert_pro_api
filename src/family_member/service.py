@@ -104,6 +104,7 @@ def get_leaderboard_service(db: Session, token: str):
         leaderboard.append({
             "member_name": member.member_name,
             "assigned_colour": member.assigned_colour,
+            "image_path": member.image_path,
             "total_points": total_points
         })
 
