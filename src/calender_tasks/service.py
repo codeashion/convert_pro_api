@@ -49,6 +49,7 @@ def get_calendar_tasks(db: Session, token: str) -> dict:
 			"family_member_id": member.id,
 			"member_name": member.member_name,
 			"assigned_colour": getattr(member, "assigned_colour", None),
+			"image_path": getattr(member, "image_path", None),
 			"tasks": tasks_today
 		})
 
@@ -95,6 +96,7 @@ def get_calendar_tasks(db: Session, token: str) -> dict:
 				"family_member_id": member.id,
 				"member_name": member.member_name,
 				"assigned_colour": getattr(member, "assigned_colour", None),
+				"image_path": getattr(member, "image_path", None),
 				"tasks": tasks_next
 			})
 
