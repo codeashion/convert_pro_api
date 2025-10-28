@@ -7,7 +7,6 @@ from ..tasks.models import Task, TaskAssignment
 from ..reminders.models import Reminder
 from calendar import monthrange
 
-
 # Try common alternatives for the date field in TaskAssignment
 def get_calendar_tasks(db: Session, token: str) -> dict:
 	"""
@@ -50,6 +49,7 @@ def get_calendar_tasks(db: Session, token: str) -> dict:
 			"member_name": member.member_name,
 			"assigned_colour": getattr(member, "assigned_colour", None),
 			"image_path": getattr(member, "image_path", None),
+			"member_type": getattr(member, "member_type", None),
 			"tasks": tasks_today
 		})
 
@@ -97,10 +97,12 @@ def get_calendar_tasks(db: Session, token: str) -> dict:
 				"member_name": member.member_name,
 				"assigned_colour": getattr(member, "assigned_colour", None),
 				"image_path": getattr(member, "image_path", None),
+				"member_type": getattr(member, "member_type", None),
 				"tasks": tasks_next
 			})
 
 	return result
+
 
 
 def get_month_tasks_reminders(db: Session, token: str, year: int, month: int) -> dict:
@@ -160,5 +162,3 @@ def get_month_tasks_reminders(db: Session, token: str, year: int, month: int) ->
 		result[str(date_obj)] = day_data
 
 	return result
-
-

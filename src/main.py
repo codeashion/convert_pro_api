@@ -43,9 +43,9 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
     logger.warning(f"HTTPException: {exc.status_code} - {exc.detail} - Path: {request.url.path}")
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "statusCode": exc.status_code,
-            "status": False,
+        content={ 
+            "statusCode": exc.status_code, 
+            "status": False, 
             "message": exc.detail if isinstance(exc.detail, str) else str(exc.detail),
             "data": None
         }
