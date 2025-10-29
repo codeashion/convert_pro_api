@@ -24,9 +24,14 @@ try:
     seed_default_task_icons(db)
     seed_preloaded_files(db)
 
+
     # Start repeating task scheduler
     from src.tasks.scheduler import start_scheduler
     start_scheduler(db)
+
+    # Start repeating reminder scheduler
+    from src.reminders.scheduler import start_reminder_scheduler
+    start_reminder_scheduler(db)
 
     db.close()
 except Exception as e:

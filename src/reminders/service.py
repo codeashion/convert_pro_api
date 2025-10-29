@@ -157,6 +157,7 @@ def get_reminder_by_id(db: Session, token: str, reminder_id: int) -> ReminderOut
             detail=f"Failed to retrieve reminder: {str(e)}"
         )
 
+
 def create_reminder(db: Session, token: str, reminder_data: ReminderCreate) -> ReminderOut:
     """Create a new reminder"""
     try:
@@ -180,78 +181,38 @@ def create_reminder(db: Session, token: str, reminder_data: ReminderCreate) -> R
                 detail="Family member not found or doesn't belong to user"
             )
     
-        # Repeat logic
-        from datetime import timedelta
-        repeat_mode = reminder_data.repeat_pattern
-        start_date = reminder_data.reminder_date
-        created_reminders = []
-        repeat_limits = {
-            "Daily": 30,      # create for next 30 days
-            "Weekly": 12,     # create for next 12 weeks
-            "Monthly": 12,    # create for next 12 months
-            "Yearly": 5       # create for next 5 years
-        }
 
-        def add_reminder_for_date(reminder_date):
-            new_reminder = Reminder(
-                user_id=user_id,
-                title=reminder_data.title,
-                reminder_date=reminder_date,
-                reminder_time=reminder_data.reminder_time,
-                repeat_pattern=reminder_data.repeat_pattern,
-                family_member_id=reminder_data.family_member_id,
-                voice_note=reminder_data.voice_note,
-                message=reminder_data.message,
-                audio_file=reminder_data.audio_file
-            )
-            db.add(new_reminder)
-            db.commit()
-            db.refresh(new_reminder)
-            created_reminders.append(new_reminder)
-            return new_reminder
+        # Only create the first reminder (today's entry)
+        new_reminder = Reminder(
+            user_id=user_id,
+            title=reminder_data.title,
+            reminder_date=reminder_data.reminder_date,
+            reminder_time=reminder_data.reminder_time,
+            repeat_pattern=reminder_data.repeat_pattern,
+            family_member_id=reminder_data.family_member_id,
+            voice_note=reminder_data.voice_note,
+            message=reminder_data.message,
+            audio_file=reminder_data.audio_file,
+            is_active=True
+        )
+        db.add(new_reminder)
+        db.commit()
+        db.refresh(new_reminder)
 
-        # Create reminders based on repeat mode
-        if repeat_mode == "None" or not repeat_mode:
-            add_reminder_for_date(start_date)
-        elif repeat_mode == "Daily":
-            for i in range(repeat_limits["Daily"]):
-                add_reminder_for_date(start_date + timedelta(days=i))
-        elif repeat_mode == "Weekly":
-            for i in range(repeat_limits["Weekly"]):
-                add_reminder_for_date(start_date + timedelta(weeks=i))
-        elif repeat_mode == "Monthly":
-            for i in range(repeat_limits["Monthly"]):
-                month = (start_date.month - 1 + i) % 12 + 1
-                year = start_date.year + ((start_date.month - 1 + i) // 12)
-                day = min(start_date.day, [31,
-                    29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28,
-                    31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month-1])
-                from datetime import date as dt_date
-                add_reminder_for_date(dt_date(year, month, day))
-        elif repeat_mode == "Yearly":
-            for i in range(repeat_limits["Yearly"]):
-                year = start_date.year + i
-                month = start_date.month
-                day = start_date.day
-                from datetime import date as dt_date
-                add_reminder_for_date(dt_date(year, month, day))
-
-        # Prepare response for the first created reminder
-        first_reminder = created_reminders[0]
         reminder_dict = {
-            "id": first_reminder.id,
-            "title": first_reminder.title,
-            "reminder_date": first_reminder.reminder_date,
-            "reminder_time": first_reminder.reminder_time,
-            "repeat_pattern": first_reminder.repeat_pattern,
-            "family_member_id": first_reminder.family_member_id,
+            "id": new_reminder.id,
+            "title": new_reminder.title,
+            "reminder_date": new_reminder.reminder_date,
+            "reminder_time": new_reminder.reminder_time,
+            "repeat_pattern": new_reminder.repeat_pattern,
+            "family_member_id": new_reminder.family_member_id,
             "family_member_name": family_member.member_name,
-            "voice_note": first_reminder.voice_note,
-            "message": first_reminder.message,
-            "audio_file": first_reminder.audio_file,
-            "is_active": first_reminder.is_active,
-            "created_at": first_reminder.created_at,
-            "updated_at": first_reminder.updated_at
+            "voice_note": new_reminder.voice_note,
+            "message": new_reminder.message,
+            "audio_file": new_reminder.audio_file,
+            "is_active": new_reminder.is_active,
+            "created_at": new_reminder.created_at,
+            "updated_at": new_reminder.updated_at
         }
         return ReminderOut(**reminder_dict)
         
@@ -263,6 +224,7 @@ def create_reminder(db: Session, token: str, reminder_data: ReminderCreate) -> R
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create reminder: {str(e)}"
         )
+
 
 def update_reminder(db: Session, token: str, reminder_id: int, reminder_data: ReminderUpdate) -> ReminderOut:
     """Update an existing reminder"""
