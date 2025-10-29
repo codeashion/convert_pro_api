@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
-from src.api import router
+from src.api import router 
 from src.database import Base, engine, SessionLocal
 from src.tasks.service import seed_default_task_icons
 from src.file_upload.service import seed_preloaded_files
@@ -17,13 +17,11 @@ logger = logging.getLogger(__name__)
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
-
 # Seed default task icons and start repeating task scheduler
 try:
     db = SessionLocal()
     seed_default_task_icons(db)
     seed_preloaded_files(db)
-
 
     # Start repeating task scheduler
     from src.tasks.scheduler import start_scheduler
