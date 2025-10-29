@@ -212,6 +212,7 @@ def create_task(db: Session, token: str, task_data: TaskCreate) -> TaskOut:
             if task_data.reminder_enabled:
                 from ..reminders.models import Reminder
                 reminder = Reminder(
+                    user_id=user_id,
                     title=task_data.title,
                     reminder_date=task_date,
                     reminder_time=task_data.task_time,

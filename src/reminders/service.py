@@ -179,8 +179,7 @@ def create_reminder(db: Session, token: str, reminder_data: ReminderCreate) -> R
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Family member not found or doesn't belong to user"
             )
-        
-
+    
         # Repeat logic
         from datetime import timedelta
         repeat_mode = reminder_data.repeat_pattern
