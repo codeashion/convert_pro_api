@@ -4,6 +4,7 @@ from datetime import date
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from sqlalchemy import select
+from sqlalchemy import func
 from ..admin_users.models import User, FamilyMember, FamilyMemberCreate 
 from ..family_member_points.model import FamilyMemberPoints 
 from ..auth import verify_token 
@@ -122,26 +123,24 @@ def get_today_task_leaderboard(db: Session, token: str):
     ).scalars().all()
 
     leaderboard = []
+    from ..tasks.models import Task, TaskAssignment
     for member in members:
-        # Total tasks assigned today from task_assignment
-        total_tasks = db.query(TaskAssignment).filter(
+        # Total tasks assigned today (by Task.task_date)
+        total_tasks = db.query(TaskAssignment).join(Task).filter(
             TaskAssignment.family_member_id == member.id,
-            TaskAssignment.assigned_at >= today,
-            TaskAssignment.assigned_at < today.replace(day=today.day+1) if today.day < 28 else TaskAssignment.assigned_at <= today
+            Task.task_date == today
         ).count()
 
-        # Completed tasks today
+        # Completed tasks today (by CompletedTask.created_at date)
         completed_tasks = db.query(CompletedTask).filter(
             CompletedTask.family_member_id == member.id,
-            CompletedTask.created_at >= today,
-            CompletedTask.created_at < today.replace(day=today.day+1) if today.day < 28 else CompletedTask.created_at <= today
+            func.date(CompletedTask.created_at) == today
         ).count()
 
         # Today's earned points
         today_points = db.query(CompletedTask).filter(
             CompletedTask.family_member_id == member.id,
-            CompletedTask.created_at >= today,
-            CompletedTask.created_at < today.replace(day=today.day+1) if today.day < 28 else CompletedTask.created_at <= today
+            func.date(CompletedTask.created_at) == today
         ).with_entities(CompletedTask.point).all()
         total_points = sum([p[0] for p in today_points]) if today_points else 0
 
@@ -155,3 +154,4 @@ def get_today_task_leaderboard(db: Session, token: str):
         })
 
     return leaderboard
+

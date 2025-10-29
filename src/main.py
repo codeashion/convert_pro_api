@@ -17,14 +17,20 @@ logger = logging.getLogger(__name__)
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
-# Seed default task icons
+
+# Seed default task icons and start repeating task scheduler
 try:
     db = SessionLocal()
     seed_default_task_icons(db)
     seed_preloaded_files(db)
+
+    # Start repeating task scheduler
+    from src.tasks.scheduler import start_scheduler
+    start_scheduler(db)
+
     db.close()
 except Exception as e:
-    logger.error(f"Failed to seed default data: {str(e)}")
+    logger.error(f"Failed to seed default data or start scheduler: {str(e)}")
 
 app = FastAPI(
     title="Calendar API",
@@ -56,8 +62,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     """Handle validation errors (like missing headers) with standardized format"""
     error_details = []
     for error in exc.errors():
-        if error["type"] == "missing":
-            field_name = " -> ".join(str(loc) for loc in error["loc"])
+        if error["type"] == "missing": 
+            field_name = " -> ".join(str(loc) for loc in error["loc"]) 
             error_details.append(f"{field_name} is required")
         else:
             error_details.append(f"{error['loc'][-1]}: {error['msg']}")
