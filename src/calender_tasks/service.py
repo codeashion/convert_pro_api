@@ -103,8 +103,6 @@ def get_calendar_tasks(db: Session, token: str) -> dict:
 
 	return result
 
-
-
 def get_month_tasks_reminders(db: Session, token: str, year: int, month: int) -> dict:
 	"""
 	Return date-wise full month tasks and reminders with family member details.

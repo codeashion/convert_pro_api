@@ -174,91 +174,132 @@ def create_task(db: Session, token: str, task_data: TaskCreate) -> TaskOut:
                     detail="Some family members not found or don't belong to user"
                 )
         
-        # Create task
-        new_task = Task(
-            user_id=user_id,
-            title=task_data.title,
-            task_date=task_data.task_date,
-            task_time=task_data.task_time,
-            repeat_pattern=task_data.repeat_pattern,
-            points=task_data.points,
-            icon=task_data.icon,
-            is_private=task_data.is_private,
-            reminder_enabled=task_data.reminder_enabled,
-            voice_note=task_data.voice_note,
-            tone=task_data.tone,
-            message=task_data.message,
-            audio_file=task_data.audio_file
-        )
 
-        db.add(new_task)
-        db.commit()
-        db.refresh(new_task)
+        # Repeat logic
+        from datetime import timedelta
+        repeat_mode = task_data.repeat_pattern
+        start_date = task_data.task_date
+        created_tasks = []
+        repeat_limits = {
+            "Daily": 30,      # create for next 30 days
+            "Weekly": 12,     # create for next 12 weeks
+            "Monthly": 12,    # create for next 12 months
+            "Yearly": 5       # create for next 5 years
+        }
 
-        # If reminder_enabled, create a reminder
-        if task_data.reminder_enabled:
-            from ..reminders.models import Reminder, ReminderCreate
-            reminder = Reminder(
+        def add_task_for_date(task_date):
+            new_task = Task(
+                user_id=user_id,
                 title=task_data.title,
-                reminder_date=task_data.task_date,
-                reminder_time=task_data.task_time,
+                task_date=task_date,
+                task_time=task_data.task_time,
                 repeat_pattern=task_data.repeat_pattern,
-                family_member_id=task_data.assigned_family_members[0] if task_data.assigned_family_members else None,
-                message=task_data.message,
+                points=task_data.points,
+                icon=task_data.icon,
+                is_private=task_data.is_private,
+                reminder_enabled=task_data.reminder_enabled,
                 voice_note=task_data.voice_note,
-                audio_file=task_data.audio_file,
-                is_active=True
+                tone=task_data.tone,
+                message=task_data.message,
+                audio_file=task_data.audio_file
             )
-            db.add(reminder)
+            db.add(new_task)
             db.commit()
-            db.refresh(reminder)
+            db.refresh(new_task)
+            created_tasks.append(new_task)
 
-        # Create task assignments
-        assigned_members = []
-        if task_data.assigned_family_members:
-            for family_member_id in task_data.assigned_family_members:
-                assignment = TaskAssignment(
-                    task_id=new_task.id,
-                    family_member_id=family_member_id
+            # If reminder_enabled, create a reminder
+            if task_data.reminder_enabled:
+                from ..reminders.models import Reminder
+                reminder = Reminder(
+                    title=task_data.title,
+                    reminder_date=task_date,
+                    reminder_time=task_data.task_time,
+                    repeat_pattern=task_data.repeat_pattern,
+                    family_member_id=task_data.assigned_family_members[0] if task_data.assigned_family_members else None,
+                    message=task_data.message,
+                    voice_note=task_data.voice_note,
+                    audio_file=task_data.audio_file,
+                    is_active=True
                 )
-                db.add(assignment)
-                assigned_members.append(assignment)
-            db.commit()
+                db.add(reminder)
+                db.commit()
+                db.refresh(reminder)
 
-            # Get assigned member details
-            assigned_member_details = []
-            for assignment in assigned_members:
-                member = db.execute(
-                    select(FamilyMember).where(FamilyMember.id == assignment.family_member_id)
-                ).scalars().first()
-                assigned_member_details.append(
-                    TaskAssignmentOut(
-                        id=assignment.id,
-                        family_member_id=assignment.family_member_id,
-                        family_member_name=member.member_name,
-                        assigned_at=assignment.assigned_at
+            # Create task assignments
+            assigned_members = []
+            if task_data.assigned_family_members:
+                for family_member_id in task_data.assigned_family_members:
+                    assignment = TaskAssignment(
+                        task_id=new_task.id,
+                        family_member_id=family_member_id
                     )
-                )
-        else:
-            assigned_member_details = []
+                    db.add(assignment)
+                    assigned_members.append(assignment)
+                db.commit()
+            return new_task
+
+        # Create tasks based on repeat mode
+        if repeat_mode == "None" or not repeat_mode:
+            add_task_for_date(start_date)
+        elif repeat_mode == "Daily":
+            for i in range(repeat_limits["Daily"]):
+                add_task_for_date(start_date + timedelta(days=i))
+        elif repeat_mode == "Weekly":
+            for i in range(repeat_limits["Weekly"]):
+                add_task_for_date(start_date + timedelta(weeks=i))
+        elif repeat_mode == "Monthly":
+            for i in range(repeat_limits["Monthly"]):
+                month = (start_date.month - 1 + i) % 12 + 1
+                year = start_date.year + ((start_date.month - 1 + i) // 12)
+                day = min(start_date.day, [31,
+                    29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28,
+                    31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month-1])
+                from datetime import date as dt_date
+                add_task_for_date(dt_date(year, month, day))
+        elif repeat_mode == "Yearly":
+            for i in range(repeat_limits["Yearly"]):
+                year = start_date.year + i
+                month = start_date.month
+                day = start_date.day
+                from datetime import date as dt_date
+                add_task_for_date(dt_date(year, month, day))
+
+        # Prepare response for the first created task
+        first_task = created_tasks[0]
+        # Get assigned member details for the first task
+        assignments = db.execute(
+            select(TaskAssignment, FamilyMember)
+            .join(FamilyMember, TaskAssignment.family_member_id == FamilyMember.id)
+            .where(TaskAssignment.task_id == first_task.id)
+        ).all()
+        assigned_member_details = [
+            TaskAssignmentOut(
+                id=assignment.id,
+                family_member_id=assignment.family_member_id,
+                family_member_name=member.member_name,
+                assigned_at=assignment.assigned_at
+            )
+            for assignment, member in assignments
+        ]
 
         task_dict = {
-            "id": new_task.id,
-            "title": new_task.title,
-            "task_date": new_task.task_date,
-            "task_time": new_task.task_time,
-            "repeat_pattern": new_task.repeat_pattern,
-            "points": new_task.points,
-            "icon": new_task.icon,
-            "is_private": new_task.is_private,
-            "reminder_enabled": new_task.reminder_enabled,
-            "voice_note": new_task.voice_note,
-            "tone": new_task.tone,
-            "message": new_task.message,
-            "audio_file": new_task.audio_file,
-            "is_completed": new_task.is_completed,
-            "created_at": new_task.created_at,
-            "updated_at": new_task.updated_at,
+            "id": first_task.id,
+            "title": first_task.title,
+            "task_date": first_task.task_date,
+            "task_time": first_task.task_time,
+            "repeat_pattern": first_task.repeat_pattern,
+            "points": first_task.points,
+            "icon": first_task.icon,
+            "is_private": first_task.is_private,
+            "reminder_enabled": first_task.reminder_enabled,
+            "voice_note": first_task.voice_note,
+            "tone": first_task.tone,
+            "message": first_task.message,
+            "audio_file": first_task.audio_file,
+            "is_completed": first_task.is_completed,
+            "created_at": first_task.created_at,
+            "updated_at": first_task.updated_at,
             "assigned_family_members": assigned_member_details
         }
 
@@ -272,7 +313,6 @@ def create_task(db: Session, token: str, task_data: TaskCreate) -> TaskOut:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create task: {str(e)}"
         )
-
 
 def update_task(db: Session, token: str, task_id: int, task_data: TaskUpdate) -> TaskOut:
     """Update an existing task"""
