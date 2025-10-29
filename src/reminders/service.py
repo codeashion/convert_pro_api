@@ -157,7 +157,6 @@ def get_reminder_by_id(db: Session, token: str, reminder_id: int) -> ReminderOut
             detail=f"Failed to retrieve reminder: {str(e)}"
         )
 
-
 def create_reminder(db: Session, token: str, reminder_data: ReminderCreate) -> ReminderOut:
     """Create a new reminder"""
     try:
@@ -265,7 +264,6 @@ def create_reminder(db: Session, token: str, reminder_data: ReminderCreate) -> R
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create reminder: {str(e)}"
         )
-
 
 def update_reminder(db: Session, token: str, reminder_id: int, reminder_data: ReminderUpdate) -> ReminderOut:
     """Update an existing reminder"""
