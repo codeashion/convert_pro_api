@@ -112,7 +112,6 @@ def delete_true_home_essentials(db: Session, token: str):
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to delete home essential items: {str(e)}")
 
-
 # Grocery CRUD Functions
 
 def get_all_groceries(db: Session, token: str):

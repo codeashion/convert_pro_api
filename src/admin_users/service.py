@@ -78,6 +78,8 @@ def create_user(db: Session, user_data: UserCreate) -> Dict:
         logger.error(f"Signup error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Signup failed: {str(e)}")
 
+
+
 def login_user(db: Session, user_data: UserLogin) -> Dict:
     """Login function for regular parents - searches parents table"""
     try:
