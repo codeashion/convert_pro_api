@@ -11,6 +11,7 @@ from ..admin_users.models import User, FamilyMember, UserCreate, UserLogin, Admi
 from ..config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from ..auth import verify_token
 from ..home_essential.model import HomeEssential, Grocery
+from ..rewards.models import Reward
 
 logger = logging.getLogger(__name__)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
