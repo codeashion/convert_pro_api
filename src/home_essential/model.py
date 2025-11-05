@@ -54,7 +54,7 @@
 #         from_attributes = True
 
 
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean
 from pydantic import BaseModel
 from ..database import Base
 
@@ -66,7 +66,7 @@ class HomeEssential(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
     status = Column(Boolean, default=False, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # link to parent user
+    user_id = Column(Integer, nullable=False)  # Removed ForeignKey
 
 
 class Grocery(Base):
@@ -75,7 +75,7 @@ class Grocery(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
     status = Column(Boolean, default=False, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # link to parent user
+    user_id = Column(Integer, nullable=False)  # Removed ForeignKey
 
 # ---------- Pydantic Models ----------
 
