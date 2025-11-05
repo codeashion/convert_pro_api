@@ -10,7 +10,8 @@ class Reward(Base):
     __tablename__ = "rewards"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("parents.id", ondelete="CASCADE"), nullable=False)
+    # user_id = Column(Integer, ForeignKey("parents.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, nullable=False) 
     reward = Column(String(255), nullable=False)
     points = Column(String(100), nullable=False)
     requested_by = Column(String(255), nullable=True)
