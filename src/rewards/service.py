@@ -25,7 +25,6 @@ def list_rewards(db: Session, token: str, limit: int = 100, offset: int = 0) -> 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to list rewards: {str(e)}")
 
-
 def get_reward(db: Session, token: str, reward_id: int) -> RewardOut:
     try:
         payload = verify_token(token)
@@ -40,7 +39,6 @@ def get_reward(db: Session, token: str, reward_id: int) -> RewardOut:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get reward: {str(e)}")
-
 
 def create_reward(db: Session, token: str, data: RewardCreate) -> RewardOut:
     try:
@@ -63,7 +61,6 @@ def create_reward(db: Session, token: str, data: RewardCreate) -> RewardOut:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to create reward: {str(e)}")
 
-
 def update_reward(db: Session, token: str, reward_id: int, data: RewardUpdate) -> RewardOut:
     try:
         payload = verify_token(token)
@@ -84,7 +81,6 @@ def update_reward(db: Session, token: str, reward_id: int, data: RewardUpdate) -
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to update reward: {str(e)}")
 
-
 def delete_reward(db: Session, token: str, reward_id: int) -> dict:
     try:
         payload = verify_token(token)
@@ -102,5 +98,3 @@ def delete_reward(db: Session, token: str, reward_id: int) -> dict:
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to delete reward: {str(e)}")
-
-

@@ -32,120 +32,124 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 # def create_user(db: Session, user_data: UserCreate, role: str = "parent") -> Dict:
 #     """Create a new user (parent only - admins are created separately)"""
 #     try:
-#         # Check if email already exists in both tables
+#         # Check existing user
 #         existing_user = db.execute(select(User).where(User.email == user_data.email)).scalars().first()
 #         existing_admin = db.execute(select(Admin).where(Admin.email == user_data.email)).scalars().first()
-
 #         if existing_user or existing_admin:
-#             logger.warning(f"Registration attempt with existing email: {user_data.email}")
-#             raise HTTPException(
-#                 status_code=400,
-#                 detail=f"An account with email '{user_data.email}' already exists. Please use a different email or try logging in."
-#             )
+#             raise HTTPException(status_code=400, detail=f"Email '{user_data.email}' already exists.")
 
-#         # Validate password confirmation
+#         # Validate password match
 #         if user_data.password != user_data.confirm_password:
-#             raise HTTPException(
-#                 status_code=400,
-#                 detail="Password and confirm password do not match. Please ensure both passwords are identical."
-#             )
+#             raise HTTPException(status_code=400, detail="Passwords do not match.")
 
+#         # Create new user
 #         hashed_pw = get_password_hash(user_data.password)
-#         new_user = User(
-#             full_name=user_data.full_name,
-#             email=user_data.email,
-#             password=hashed_pw,
-#             provider="email"  # Set provider for email-based signups
-#         )
+#         new_user = User(full_name=user_data.full_name, email=user_data.email, password=hashed_pw, provider="email")
 #         db.add(new_user)
-#         db.flush()  # To get new_user.id before commit
+#         db.flush()  # to get user_id before commit
 
-#         # Create family members if provided
-#         family_members_created = []
+#         # Add family members
 #         for member in user_data.family_members:
-#             try:
-#                 family = FamilyMember(
-#                     user_id=new_user.id,
-#                     member_name=member.member_name,
-#                     date_of_birth=member.date_of_birth,
-#                     assigned_colour=member.assigned_colour,
-#                     image_path=member.image_path,
-#                     voice_recording=member.voice_recording
-#                 )
-#                 db.add(family)
-#                 family_members_created.append(family)
-#             except Exception as e:
-#                 logger.error(f"Error creating family member {member.member_name}: {str(e)}")
-#                 raise HTTPException(
-#                     status_code=400,
-#                     detail=f"Error creating family member '{member.member_name}': {str(e)}"
-#                 )
+#             family = FamilyMember(
+#                 user_id=new_user.id,
+#                 member_name=member.member_name,
+#                 date_of_birth=member.date_of_birth,
+#                 assigned_colour=member.assigned_colour,
+#                 image_path=member.image_path,
+#                 voice_recording=member.voice_recording,
+#             )
+#             db.add(family)
+
+#         # ✅ Add default Home Essentials
+#         home_essentials = [
+#             "Toilet Paper",
+#             "Laundry Detergent",
+#             "Dishwashing Liquid",
+#             "Garbage Bags",
+#             "Cleaning Spray",
+#             "Light Bulbs",
+#             "Hand Soap",
+#             "Paper Towels",
+#             "Air Freshener",
+#             "Batteries (AA/AAA)"
+#         ]
+
+#         for name in home_essentials:
+#             db.add(HomeEssential(name=name, user_id=new_user.id, status=False))
+
+#         # ✅ Add default Groceries
+#         groceries = [
+#             "Rice",
+#             "Cooking Oil (Sunflower, Mustard, or Olive)",
+#             "Salt, Sugar, and Spices",
+#             "Milk",
+#             "Bread",
+#             "Vegetables (Onion, Potato, Tomato, etc.)",
+#             "Fruits (Banana, Apple, Orange)",
+#             "Tea",
+#             "Pulses",
+#             "Snacks"
+#         ]
+
+#         for name in groceries:
+#             db.add(Grocery(name=name, user_id=new_user.id, status=False))
 
 #         db.commit()
 #         db.refresh(new_user)
 
-#         # Create JWT token for the new user
+#         # Create JWT token
 #         access_token = create_access_token({"id": str(new_user.id), "email": new_user.email, "role": "parent"})
-
-#         logger.info(f"Successfully created user: {new_user.email} with {len(family_members_created)} family members")
 
 #         return {
 #             "statusCode": 200,
 #             "status": True,
-#             "message": f"User '{user_data.full_name}' registered successfully with {len(family_members_created)} family members",
+#             "message": f"User '{user_data.full_name}' registered successfully. Default items added.",
 #             "data": {
 #                 "parent": {
 #                     "id": new_user.id,
 #                     "full_name": new_user.full_name,
 #                     "email": new_user.email,
 #                     "role": "parent",
-#                     "family_members": [
-#                         {
-#                             "id": f.id,
-#                             "member_name": f.member_name,
-#                             "date_of_birth": f.date_of_birth,
-#                             "assigned_colour": f.assigned_colour,
-#                             "image_path": f.image_path,
-#                             "voice_recording": f.voice_recording,
-#                         } for f in new_user.family_members
-#                     ]
 #                 },
 #                 "access_token": access_token,
 #                 "token_type": "bearer"
 #             }
 #         }
+
 #     except HTTPException:
 #         db.rollback()
 #         raise
 #     except Exception as e:
 #         db.rollback()
-#         logger.error(f"Unexpected error during user signup: {str(e)}")
-#         raise HTTPException(
-#             status_code=500,
-#             detail="Registration failed due to a server error. Please try again later or contact support if the issue persists."
-#         )
+#         logger.error(f"Signup error: {str(e)}")
+#         raise HTTPException(status_code=500, detail="Registration failed due to a server error.")
 
 
 def create_user(db: Session, user_data: UserCreate, role: str = "parent") -> Dict:
     """Create a new user (parent only - admins are created separately)"""
     try:
-        # Check existing user
+        # 🔹 Check existing user or admin
         existing_user = db.execute(select(User).where(User.email == user_data.email)).scalars().first()
         existing_admin = db.execute(select(Admin).where(Admin.email == user_data.email)).scalars().first()
         if existing_user or existing_admin:
             raise HTTPException(status_code=400, detail=f"Email '{user_data.email}' already exists.")
 
-        # Validate password match
+        # 🔹 Validate password match
         if user_data.password != user_data.confirm_password:
             raise HTTPException(status_code=400, detail="Passwords do not match.")
 
-        # Create new user
+        # 🔹 Create new user
         hashed_pw = get_password_hash(user_data.password)
-        new_user = User(full_name=user_data.full_name, email=user_data.email, password=hashed_pw, provider="email")
+        new_user = User(
+            full_name=user_data.full_name,
+            email=user_data.email,
+            password=hashed_pw,
+            provider="email"
+        )
         db.add(new_user)
-        db.flush()  # to get user_id before commit
+        db.flush()  # Get user_id before commit
 
-        # Add family members
+        # 🔹 Add family members
         for member in user_data.family_members:
             family = FamilyMember(
                 user_id=new_user.id,
@@ -170,7 +174,6 @@ def create_user(db: Session, user_data: UserCreate, role: str = "parent") -> Dic
             "Air Freshener",
             "Batteries (AA/AAA)"
         ]
-
         for name in home_essentials:
             db.add(HomeEssential(name=name, user_id=new_user.id, status=False))
 
@@ -187,15 +190,41 @@ def create_user(db: Session, user_data: UserCreate, role: str = "parent") -> Dic
             "Pulses",
             "Snacks"
         ]
-
         for name in groceries:
             db.add(Grocery(name=name, user_id=new_user.id, status=False))
 
+        # ✅ Add default Rewards
+        rewards = [
+            "Star Performer",
+            "Employee of the Month",
+            "Outstanding Contributor",
+            "Excellence Award",
+            "Achiever’s Trophy",
+            "Dedication Award",
+            "Performance Champion",
+            "Leadership Excellence",
+            "Rising Star",
+            "Hall of Fame"
+        ]
+        for reward_name in rewards:
+            db.add(Reward(
+                user_id=new_user.id,
+                reward=reward_name,
+                points="0",                # default point
+                requested_by=None,
+                created_by="System"         # optional for tracking
+            ))
+
+        # 🔹 Commit all inserts
         db.commit()
         db.refresh(new_user)
 
-        # Create JWT token
-        access_token = create_access_token({"id": str(new_user.id), "email": new_user.email, "role": "parent"})
+        # 🔹 Create JWT token
+        access_token = create_access_token({
+            "id": str(new_user.id),
+            "email": new_user.email,
+            "role": "parent"
+        })
 
         return {
             "statusCode": 200,
@@ -397,9 +426,6 @@ def delete_user_profile(db: Session, token: str) -> Dict:
             "data": None
         }
 
-
-
-
 # ======== ADMIN-ONLY FUNCTIONS ========
 
 def require_admin(token: str) -> Dict:
@@ -415,7 +441,6 @@ def require_admin(token: str) -> Dict:
             detail="Administrator privileges required. This action can only be performed by admin users. Please contact your administrator for access."
         )
     return payload
-
 
 # ======== PASSWORD RESET FUNCTION ========
 def reset_password(db: Session, token: str, current_password: str, new_password: str, confirm_new_password: str) -> Dict:
@@ -465,7 +490,6 @@ def reset_password(db: Session, token: str, current_password: str, new_password:
         "message": "Password reset successful.",
         "data": None
     }
-
 
 # ======== UPDATE PASSWORD BY EMAIL FUNCTION ========
 def update_password_by_email(db: Session, email: str, new_password: str, confirm_new_password: str) -> Dict:
@@ -561,5 +585,3 @@ def delete_user_by_id(db: Session, token: str, user_id: int) -> Dict:
         "message": "Parent deleted successfully",
         "data": None
     }
-
-
