@@ -3,7 +3,7 @@ from sqlalchemy import select, and_
 from fastapi import HTTPException, status
 from typing import List, Optional
 from datetime import datetime, date
-from ..tasks.models import Task, TaskAssignment, TaskCreate, TaskUpdate, TaskOut, TaskAssignmentOut, TaskIcon, TaskIconCreate, TaskIconUpdate, TaskIconOut
+from ..tasks.models import Task, TaskAssignment, TaskCreate, TaskUpdate, TaskOut, TaskAssignmentOut, TaskIcon, TaskIconCreate, TaskIconUpdate, TaskIconOut, TaskCompleteUpdate
 from ..admin_users.models import FamilyMember
 from ..auth import verify_token
 import logging
@@ -349,6 +349,58 @@ def update_task(db: Session, token: str, task_id: int, task_data: TaskUpdate) ->
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update task: {str(e)}"
         )
+
+def update_task_completion(db: Session, token: str, task_id: int, task_data: TaskCompleteUpdate):
+    """Update only the is_completed status of a task"""
+    try:
+        payload = verify_token(token)
+        user_id = int(payload["id"])
+
+        # Fetch the task
+        task = db.execute(
+            select(Task).where(and_(Task.id == task_id, Task.user_id == user_id))
+        ).scalars().first()
+
+        if not task:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task not found"
+            )
+
+        if task_data.is_completed is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="is_completed value is required"
+            )
+
+        # Update only the is_completed field
+        task.is_completed = task_data.is_completed
+        task.updated_at = datetime.utcnow()
+
+        db.commit()
+        db.refresh(task)
+
+        return {
+            "statusCode": 200,
+            "status": True,
+            "message": f"Task {'completed' if task.is_completed else 'marked incomplete'} successfully",
+            "data": {
+                "id": task.id,
+                "title": task.title,
+                "is_completed": task.is_completed,
+                "updated_at": task.updated_at
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update task completion: {str(e)}"
+        )
+
 
 def delete_task(db: Session, token: str, task_id: int) -> dict:
     """Delete a task"""

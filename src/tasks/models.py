@@ -121,6 +121,11 @@ class TaskUpdate(BaseModel):
     is_completed: Optional[bool] = None
     assigned_family_members: Optional[List[int]] = None
 
+
+
+class TaskCompleteUpdate(BaseModel):
+    is_completed: Optional[bool] = None
+
 class TaskOut(BaseModel):
     id: int
     title: str

@@ -13,7 +13,7 @@ ALLOWED_EXTENSIONS = {
     'image': ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'],
     'document': ['.pdf', '.doc', '.docx', '.txt']
 }
-
+ 
 UPLOAD_CATEGORIES = {
     'task_icons': 'uploads/task_icons',
     'task_audio': 'uploads/task_audio', 

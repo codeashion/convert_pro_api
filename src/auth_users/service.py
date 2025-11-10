@@ -168,7 +168,7 @@ def create_user(db: Session, user_data: UserCreate, role: str = "parent") -> Dic
             "Laundry Detergent",
             "Dishwashing Liquid",
             "Garbage Bags",
-            "Cleaning Spray",
+            "Cleaning Spray", 
             "Light Bulbs",
             "Hand Soap",
             "Paper Towels",
@@ -211,9 +211,9 @@ def create_user(db: Session, user_data: UserCreate, role: str = "parent") -> Dic
             db.add(Reward(
                 user_id=new_user.id,
                 reward=reward_name,
-                points="0",                # default point
+                points="12",              
                 requested_by=None,
-                created_by="System"         # optional for tracking
+                created_by="System"         
             ))
 
         # 🔹 Commit all inserts

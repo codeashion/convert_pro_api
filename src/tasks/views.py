@@ -4,9 +4,9 @@ from typing import List, Optional
 from ..tasks.service import (
     get_all_tasks, get_task_by_id, create_task, update_task, 
     delete_task, get_all_task_icons, get_task_icon_by_id, 
-    create_task_icon, update_task_icon, delete_task_icon
+    create_task_icon, update_task_icon, delete_task_icon, update_task_completion
 )
-from ..tasks.models import TaskCreate, TaskUpdate, TaskOut, TaskIconCreate, TaskIconUpdate, TaskIconOut
+from ..tasks.models import TaskCreate, TaskUpdate, TaskOut, TaskIconCreate, TaskIconUpdate, TaskIconOut, TaskCompleteUpdate
 from ..database import get_db
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -48,6 +48,15 @@ def update_task_endpoint(
 ):
     """Update an existing task"""
     return update_task(db, token, task_id, task_data)
+
+@router.put("/{task_id}/complete")
+def mark_task_complete(
+    task_id: int,
+    task_data: TaskCompleteUpdate,
+    token: str = Header(...),
+    db: Session = Depends(get_db)
+):
+    return update_task_completion(db, token, task_id, task_data)
 
 @router.delete("/{task_id}")
 def delete_task_endpoint(
