@@ -52,6 +52,7 @@ class FamilyMember(Base):
     date_of_birth = Column(DateTime, nullable=False)
     assigned_colour = Column(String(50))
     image_path = Column(String(255))
+    voice_id = Column(String(255))
     voice_recording = Column(String(255))
 
     user = relationship("User", back_populates="family_members")
@@ -66,6 +67,7 @@ class FamilyMemberCreate(BaseModel):
     member_name: Optional[str] = None
     date_of_birth: Optional[date] = None
     assigned_colour: Optional[str] = None
+    voice_id : Optional[str] = None
     image_path: Optional[str] = None
     voice_recording: Optional[str] = None
 
