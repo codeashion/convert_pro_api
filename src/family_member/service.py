@@ -46,7 +46,8 @@ def add_family_member(db: Session, token: str, member_data: FamilyMemberCreate):
         date_of_birth=member_data.date_of_birth,
         assigned_colour=member_data.assigned_colour,
         image_path=member_data.image_path,
-        voice_recording=member_data.voice_recording
+        voice_recording=member_data.voice_recording,
+        voice_id=member_data.voice_id
     )
     db.add(new_member)
     db.commit()

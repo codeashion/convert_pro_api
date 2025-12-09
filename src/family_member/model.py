@@ -16,6 +16,7 @@ class FamilyMember(Base):
     assigned_colour = Column(String(50))
     image_path = Column(String(255))
     voice_recording = Column(String(255))
+    voice_id = Column(String(255))
 
 
 # ---------- Pydantic Schemas ----------
@@ -25,6 +26,7 @@ class FamilyMemberCreate(BaseModel):
     assigned_colour: Optional[str] = None
     image_path: Optional[str] = None
     voice_recording: Optional[str] = None
+    voice_id: Optional[str] = None
 
 class FamilyMemberOut(FamilyMemberCreate):
     id: int
