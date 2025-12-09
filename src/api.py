@@ -23,7 +23,6 @@ router = APIRouter()
 # Unified authentication and user management
 router.include_router(auth_router)
 
-
 # Feature modules
 router.include_router(family_member_router)
 router.include_router(instagram_router)

@@ -28,104 +28,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-
-
-# def create_user(db: Session, user_data: UserCreate, role: str = "parent") -> Dict:
-#     """Create a new user (parent only - admins are created separately)"""
-#     try:
-#         # Check existing user
-#         existing_user = db.execute(select(User).where(User.email == user_data.email)).scalars().first()
-#         existing_admin = db.execute(select(Admin).where(Admin.email == user_data.email)).scalars().first()
-#         if existing_user or existing_admin:
-#             raise HTTPException(status_code=400, detail=f"Email '{user_data.email}' already exists.")
-
-#         # Validate password match
-#         if user_data.password != user_data.confirm_password:
-#             raise HTTPException(status_code=400, detail="Passwords do not match.")
-
-#         # Create new user
-#         hashed_pw = get_password_hash(user_data.password)
-#         new_user = User(full_name=user_data.full_name, email=user_data.email, password=hashed_pw, provider="email")
-#         db.add(new_user)
-#         db.flush()  # to get user_id before commit
-
-#         # Add family members
-#         for member in user_data.family_members:
-#             family = FamilyMember(
-#                 user_id=new_user.id,
-#                 member_name=member.member_name,
-#                 date_of_birth=member.date_of_birth,
-#                 assigned_colour=member.assigned_colour,
-#                 image_path=member.image_path,
-#                 voice_recording=member.voice_recording,
-#             )
-#             db.add(family)
-
-#         # ✅ Add default Home Essentials
-#         home_essentials = [
-#             "Toilet Paper",
-#             "Laundry Detergent",
-#             "Dishwashing Liquid",
-#             "Garbage Bags",
-#             "Cleaning Spray",
-#             "Light Bulbs",
-#             "Hand Soap",
-#             "Paper Towels",
-#             "Air Freshener",
-#             "Batteries (AA/AAA)"
-#         ]
-
-#         for name in home_essentials:
-#             db.add(HomeEssential(name=name, user_id=new_user.id, status=False))
-
-#         # ✅ Add default Groceries
-#         groceries = [
-#             "Rice",
-#             "Cooking Oil (Sunflower, Mustard, or Olive)",
-#             "Salt, Sugar, and Spices",
-#             "Milk",
-#             "Bread",
-#             "Vegetables (Onion, Potato, Tomato, etc.)",
-#             "Fruits (Banana, Apple, Orange)",
-#             "Tea",
-#             "Pulses",
-#             "Snacks"
-#         ]
-
-#         for name in groceries:
-#             db.add(Grocery(name=name, user_id=new_user.id, status=False))
-
-#         db.commit()
-#         db.refresh(new_user)
-
-#         # Create JWT token
-#         access_token = create_access_token({"id": str(new_user.id), "email": new_user.email, "role": "parent"})
-
-#         return {
-#             "statusCode": 200,
-#             "status": True,
-#             "message": f"User '{user_data.full_name}' registered successfully. Default items added.",
-#             "data": {
-#                 "parent": {
-#                     "id": new_user.id,
-#                     "full_name": new_user.full_name,
-#                     "email": new_user.email,
-#                     "role": "parent",
-#                 },
-#                 "access_token": access_token,
-#                 "token_type": "bearer"
-#             }
-#         }
-
-#     except HTTPException:
-#         db.rollback()
-#         raise
-#     except Exception as e:
-#         db.rollback()
-#         logger.error(f"Signup error: {str(e)}")
-#         raise HTTPException(status_code=500, detail="Registration failed due to a server error.")
-
-
 def create_user(db: Session, user_data: UserCreate, role: str = "parent") -> Dict:
     """Create a new user (parent only - admins are created separately)"""
     try:
@@ -159,6 +61,7 @@ def create_user(db: Session, user_data: UserCreate, role: str = "parent") -> Dic
                 assigned_colour=member.assigned_colour,
                 image_path=member.image_path,
                 voice_recording=member.voice_recording,
+                voice_id=member.voice_id
             )
             db.add(family)
 
