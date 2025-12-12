@@ -154,7 +154,6 @@ def create_user(db: Session, user_data: UserCreate, role: str = "parent") -> Dic
         logger.error(f"Signup error: {str(e)}")
         raise HTTPException(status_code=500, detail="Registration failed due to a server error.")
 
-
 def login_user(db: Session, user_data: UserLogin) -> Dict:
     """Universal login for parents and admins"""
     try:

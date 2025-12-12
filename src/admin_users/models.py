@@ -66,7 +66,7 @@ class FamilyMember(Base):
 class FamilyMemberCreate(BaseModel):
     member_name: Optional[str] = None
     date_of_birth: Optional[date] = None
-    assigned_colour: Optional[str] = None
+    assigned_colour: Optional[str] = None 
     voice_id : Optional[str] = None
     image_path: Optional[str] = None
     voice_recording: Optional[str] = None

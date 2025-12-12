@@ -106,6 +106,8 @@ from ..completed_task.model import CompletedTask
 # 	return result
 
 
+
+
 def get_calendar_tasks(db: Session, token: str) -> dict:
     """
     Fetch all family members for the user (from token),
@@ -190,7 +192,7 @@ def get_calendar_tasks(db: Session, token: str) -> dict:
             if not task:
                 continue
             # Compare date field (your model used task.task_date previously)
-            if getattr(task, "task_date", Nonve) == today:
+            if getattr(task, "task_date", None) == today:
                 member_task_list.append({
                     "task_id": task.id,
                     "title": task.title,
@@ -280,6 +282,7 @@ def get_calendar_tasks(db: Session, token: str) -> dict:
             })
 
     return result
+
 
 
 def get_month_tasks_reminders(db: Session, token: str, year: int, month: int) -> dict:
